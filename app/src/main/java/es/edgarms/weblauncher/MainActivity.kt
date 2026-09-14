@@ -57,6 +57,9 @@ private fun LauncherNavHost(viewModel: PagesViewModel = viewModel()) {
                 onOpen = { context.startActivity(WebActivity.intent(context, it.id)) },
                 onEdit = { nav.navigate(PageEditRoute(it.id)) },
                 onAddToHome = { Shortcuts.requestPin(context, it) },
+                onExport = viewModel::exportTo,
+                onReadImport = viewModel::readImport,
+                onApplyImport = viewModel::applyImport,
             )
         }
         composable<PageEditRoute> { entry ->

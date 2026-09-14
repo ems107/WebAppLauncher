@@ -7,6 +7,31 @@
     <string name="shortcut_page_deleted">Esta página se borró</string>
     <string name="no_pages">Todavía no hay páginas.\nAñade una con el botón +.</string>
 
+    <string name="export_config">Exportar configuración</string>
+    <string name="import_config">Importar configuración</string>
+    <string name="export_done">Configuración exportada</string>
+    <string name="export_failed">No se pudo escribir el fichero</string>
+    <string name="import_title">¿Sustituir la configuración?</string>
+    <string name="import_confirm">Importar</string>
+    <plurals name="import_file_pages">
+        <item quantity="one">El fichero tiene una página.</item>
+        <item quantity="other">El fichero tiene %1$d páginas.</item>
+    </plurals>
+    <plurals name="import_replaces_pages">
+        <item quantity="one">Sustituirá a la página que hay ahora.</item>
+        <item quantity="other">Sustituirá a las %1$d páginas que hay ahora.</item>
+    </plurals>
+    <string name="import_replaces_nothing">Ahora no hay ninguna, así que no se pierde nada.</string>
+    <string name="import_icons_note">Los iconos se vuelven a sacar de cada web.</string>
+    <plurals name="import_done">
+        <item quantity="one">Importada una página</item>
+        <item quantity="other">Importadas %1$d páginas</item>
+    </plurals>
+    <string name="import_unreadable">No se pudo leer el fichero</string>
+    <string name="import_not_config">Ese fichero no es una configuración de Web Launcher</string>
+    <string name="import_newer">Ese fichero es de una versión más nueva de la app</string>
+    <string name="import_bad_page">La página «%1$s» del fichero no es válida</string>
+
     <string name="new_page">Nueva página</string>
     <string name="edit_page">Editar página</string>
     <string name="back">Atrás</string>

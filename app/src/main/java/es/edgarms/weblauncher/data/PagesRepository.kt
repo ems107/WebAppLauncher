@@ -4,6 +4,7 @@ import es.edgarms.weblauncher.WebLauncherApp
 import es.edgarms.weblauncher.icons.IconEdit
 import es.edgarms.weblauncher.icons.PageIcons
 import es.edgarms.weblauncher.model.Config
+import es.edgarms.weblauncher.model.ConfigTransfer
 import es.edgarms.weblauncher.model.Page
 import es.edgarms.weblauncher.shortcuts.Shortcuts
 import kotlinx.coroutines.CoroutineScope
@@ -66,11 +67,18 @@ class PagesRepository(private val app: WebLauncherApp) {
 
     fun delete(pageId: String) {
         update { config -> config.copy(pages = config.pages.filterNot { it.id == pageId }) }
-        scope.launch {
-            app.winners.remove(pageId)
-            PageIcons.prune(app, pageId)
-            Shortcuts.disable(app, pageId)
+        scope.launch { forget(pageId) }
+    }
+
+    /** Replaces every page with an imported configuration, cleaning up after the pages it drops. */
+    fun replaceAll(imported: Config) {
+        var dropped = emptyList<String>()
+        update { current ->
+            val kept = imported.pages.map { it.id }.toSet()
+            dropped = current.pages.map { it.id }.filterNot { it in kept }
+            ConfigTransfer.merge(current, imported)
         }
+        scope.launch { dropped.forEach { forget(it) } }
     }
 
     /** Points the page at another icon file, or at none, and deletes the files it no longer uses. */
@@ -79,6 +87,13 @@ class PagesRepository(private val app: WebLauncherApp) {
             config.copy(pages = config.pages.map { if (it.id == pageId) it.copy(iconPath = iconPath) else it })
         }
         scope.launch { PageIcons.prune(app, pageId, keep = iconPath) }
+    }
+
+    /** Everything a page leaves behind once it is gone: its cached address, icons and shortcuts. */
+    private fun forget(pageId: String) {
+        app.winners.remove(pageId)
+        PageIcons.prune(app, pageId)
+        Shortcuts.disable(app, pageId)
     }
 
     private fun update(change: (Config) -> Config) {

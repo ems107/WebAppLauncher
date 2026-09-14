@@ -1,10 +1,32 @@
 # Plan: WebAppLauncher — un lanzador Android para mis apps web
 
-> **Estado: fases 0 a 4 hechas.** La app ya sustituye al navegador, cada página
-> se puede anclar en la pantalla de inicio como si fuera una app y lleva el icono
-> de su web. Siguiente: fase 5 (exportar/importar y README). Este fichero se va
-> actualizando en cada commit con el estado real, y se borra en el último commit
-> de la rama, justo antes del merge.
+> **Estado: implementación terminada (fases 0 a 5).** Queda que Edgar la pruebe;
+> la rama no se mergea hasta que él lo diga. Este fichero se borra en el último
+> commit de la rama, justo antes del merge.
+>
+> **Fase 5, lo que hay:**
+> - `model/ConfigTransfer`: exportar quita los `iconPath` (son ficheros de esta
+>   instalación; en otra, cada página vuelve a sacar su icono). Importar es más
+>   estricto que cargar el fichero propio: sin lista `pages` no es una
+>   configuración (así `{}` no puede borrar todas las páginas), una versión más
+>   nueva se rechaza como tal, y una página que el editor no habría dejado guardar
+>   (sin nombre, sin direcciones, dirección inválida, id repetido) se nombra en el
+>   rechazo. Al fusionar, una página que ya estaba (mismo id) conserva su icono.
+> - `PagesRepository.replaceAll`: las páginas que la importación quita se llevan
+>   su dirección recordada, sus iconos y sus accesos directos.
+> - En la lista, un menú ⋮ arriba con Exportar e Importar (diálogos del sistema);
+>   importar pide confirmación diciendo cuántas páginas trae el fichero y cuántas
+>   sustituye.
+> - README completo, en inglés.
+> - Tests JVM: 47 en verde (7 nuevos de exportar/importar).
+> - **Verificado en el móvil:** exportar guardó `Download/web-launcher.json`
+>   (306 bytes, sin `iconPath`) con aviso «Configuration exported»; tras borrar los
+>   datos de la app (`pm clear`) la lista salió vacía; importar ese fichero pidió
+>   confirmación («The file has one page. There are no pages now…») y devolvió el
+>   Jackery con el mismo id. Al abrirlo, la carrera volvió a ganar con `.16`, el
+>   icono se descargó otra vez y el acceso dinámico se volvió a publicar.
+> - Borrar los datos quitó el acceso anclado del Jackery del escritorio (lo hace
+>   Android con los datos de la app); hay que volver a anclarlo.
 >
 > **Fase 4, lo que hay:**
 > - `data/PagesRepository`: una sola copia de las páginas para toda la app. La
