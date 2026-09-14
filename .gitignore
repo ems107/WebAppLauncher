@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Signing
+*.keystore
+*.jks
+
+# OS
+.DS_Store
+Thumbs.db
