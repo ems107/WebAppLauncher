@@ -1,10 +1,37 @@
 # Plan: WebAppLauncher — un lanzador Android para mis apps web
 
-> **Estado: fases 0 y 1 hechas.** Esqueleto Gradle que compila e instala; la
-> lista de páginas y el editor funcionan en el móvil, y la configuración se
-> guarda en `filesDir/config.json`. Siguiente: fase 2 (abrir páginas). Este
+> **Estado: fases 0, 1 y 2 hechas.** La app ya sustituye al navegador: tocar una
+> página corre la carrera entre sus direcciones y la abre a pantalla completa, o
+> explica qué dijo cada dirección. Siguiente: fase 3 (accesos directos). Este
 > fichero se va actualizando en cada commit con el estado real, y se borra en el
 > último commit de la rama, justo antes del merge.
+>
+> **Fase 2, lo que hay:**
+> - `net/`: `UrlProber` + `OkHttpUrlProber` (HEAD, conexión 1,5 s, sin seguir
+>   redirecciones; cualquier código HTTP es «vivo», así que no hace falta
+>   reintentar con GET: un 405 también es una respuesta) y `UrlRace` (la
+>   recordada sola primero; si falla, las demás a la vez, gana la primera y se
+>   cancelan las otras; si ninguna, el detalle de cada una en el orden de la página).
+> - `web/`: `WebActivity` (WebView con JavaScript, `domStorageEnabled`, cookies
+>   con `flush()` al pausar, depuración remota solo en debug; enlaces de otro
+>   origen al sistema; atrás recorre el historial y luego sale), `PageViewModel`
+>   (lee la página, corre la carrera, recuerda la ganadora; si la página falla
+>   en mitad de la sesión vuelve a correr la carrera, salvo que acabe de ganar,
+>   para no entrar en bucle) y `PageScreen` (buscando / error con reintentar / página
+>   borrada). La lista abre al tocar y edita con el lápiz.
+> - El motivo de cada fallo se lee de toda la cadena de causas: OkHttp envuelve
+>   el error real («timed out», «EHOSTUNREACH»…) dentro de un genérico «Failed
+>   to connect to».
+> - Tests JVM: 31 en verde (9 de la carrera con prober falso y tiempo virtual,
+>   6 de OkHttp contra MockWebServer y de clasificación de errores, 3 de orígenes).
+> - **Verificado en el móvil:** el Jackery abre a pantalla completa en su pantalla
+>   de PIN; con `.17` primero en la lista (inalcanzable desde el móvil) ganó `.16`
+>   y quedó recordada. Atrás desde la página vuelve a la lista. Una página con
+>   solo direcciones muertas muestra «Buscando…» y luego el error con el motivo
+>   de cada una («sin respuesta a tiempo», «red inalcanzable»); Reintentar vuelve
+>   a buscar y Cerrar vuelve a la lista. Sin errores en logcat.
+> - **Pendiente de Edgar:** meter el PIN, salir y volver sin que lo pida otra vez,
+>   y la prueba de cable a wifi.
 >
 > **Fase 1, lo que hay:**
 > - `model/`: `Page`, `Config` (+ `ConfigJson`), `PageUrls.isValid`, `Tile`

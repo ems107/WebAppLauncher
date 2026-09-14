@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,6 +21,7 @@ import es.edgarms.weblauncher.ui.PagesViewModel
 import es.edgarms.weblauncher.ui.edit.PageEditScreen
 import es.edgarms.weblauncher.ui.list.PageListScreen
 import es.edgarms.weblauncher.ui.theme.WebLauncherTheme
+import es.edgarms.weblauncher.web.WebActivity
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -43,6 +45,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun LauncherNavHost(viewModel: PagesViewModel = viewModel()) {
     val nav = rememberNavController()
+    val context = LocalContext.current
     val config by viewModel.config.collectAsStateWithLifecycle()
 
     NavHost(nav, startDestination = PageListRoute) {
@@ -50,7 +53,8 @@ private fun LauncherNavHost(viewModel: PagesViewModel = viewModel()) {
             PageListScreen(
                 pages = config?.pages,
                 onAdd = { nav.navigate(PageEditRoute()) },
-                onPageClick = { nav.navigate(PageEditRoute(it.id)) },
+                onOpen = { context.startActivity(WebActivity.intent(context, it.id)) },
+                onEdit = { nav.navigate(PageEditRoute(it.id)) },
             )
         }
         composable<PageEditRoute> { entry ->

@@ -2,6 +2,7 @@
     <string name="app_name">Web Launcher</string>
 
     <string name="add_page">Add page</string>
+    <string name="edit">Edit</string>
     <string name="no_pages">No pages yet.\nAdd one with the + button.</string>
 
     <string name="new_page">New page</string>
@@ -21,4 +22,17 @@
     <string name="add_url">Add address</string>
     <string name="delete_page_title">Delete page?</string>
     <string name="delete_page_message">“%1$s” will be removed from the launcher.</string>
+
+    <string name="probing">Looking for %1$s…</string>
+    <string name="unreachable_title">%1$s is not answering</string>
+    <string name="unreachable_help">These addresses were tried:</string>
+    <string name="probe_alive">Answered (HTTP %1$d)</string>
+    <string name="failure_timeout">No answer in time</string>
+    <string name="failure_refused">Connection refused: the server may be stopped</string>
+    <string name="failure_unreachable">Network unreachable from this phone</string>
+    <string name="failure_unknown_host">Unknown host name</string>
+    <string name="failure_other">Could not connect</string>
+    <string name="retry">Retry</string>
+    <string name="close">Close</string>
+    <string name="page_missing">This page no longer exists in the launcher.</string>
 </resources>
