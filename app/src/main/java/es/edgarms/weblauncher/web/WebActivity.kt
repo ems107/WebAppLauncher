@@ -1,6 +1,7 @@
 package es.edgarms.weblauncher.web
 
 import android.annotation.SuppressLint
+import android.app.ActivityManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -23,10 +24,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import es.edgarms.weblauncher.BuildConfig
+import es.edgarms.weblauncher.icons.TileBitmap
+import es.edgarms.weblauncher.model.Page
 import es.edgarms.weblauncher.ui.theme.WebLauncherTheme
 import kotlinx.coroutines.launch
 
-/** One page, full screen, with no address bar. */
+/**
+ * One page, full screen, with no address bar. Each page runs as its own task,
+ * with its name in recents, so it behaves like an app of its own.
+ */
 class WebActivity : ComponentActivity() {
     private val viewModel: PageViewModel by viewModels()
     private lateinit var webView: WebView
@@ -34,6 +40,7 @@ class WebActivity : ComponentActivity() {
     private var loadedId = 0
     private var loadedUrl: String? = null
     private var clearHistoryWhenLoaded = false
+    private var describedPage: Page? = null
 
     /** Back walks the page's history first, and only then leaves. */
     private val historyBack = object : OnBackPressedCallback(false) {
@@ -52,6 +59,7 @@ class WebActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
+                    state.page?.let(::describeTask)
                     if (state is PageState.Ready && state.loadId != loadedId) {
                         // A second load means another address won: the old history leads nowhere.
                         clearHistoryWhenLoaded = loadedId != 0
@@ -80,6 +88,14 @@ class WebActivity : ComponentActivity() {
         (webView.parent as? ViewGroup)?.removeView(webView)
         webView.destroy()
         super.onDestroy()
+    }
+
+    /** The page's name and tile in recents, instead of the launcher's. */
+    private fun describeTask(page: Page) {
+        if (page == describedPage) return
+        describedPage = page
+        @Suppress("DEPRECATION") // The replacement needs API 33; this works everywhere.
+        setTaskDescription(ActivityManager.TaskDescription(page.name, TileBitmap.render(page.name, TASK_ICON_PX)))
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -125,10 +141,25 @@ class WebActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_PAGE_ID = "pageId"
+        private const val TASK_ICON_PX = 192
 
+        /**
+         * The data URI is what makes each page a separate document task: with
+         * `documentLaunchMode="intoExisting"`, intents that differ only in extras
+         * would all land in the same task.
+         */
         fun intent(context: Context, pageId: String): Intent =
             Intent(context, WebActivity::class.java)
                 .setAction(Intent.ACTION_VIEW)
+                .setData(Uri.Builder().scheme("weblauncher").authority("page").appendPath(pageId).build())
                 .putExtra(EXTRA_PAGE_ID, pageId)
     }
 }
+
+private val PageState.page: Page?
+    get() = when (this) {
+        is PageState.Probing -> page
+        is PageState.Ready -> page
+        is PageState.Unreachable -> page
+        PageState.Loading, PageState.Missing -> null
+    }

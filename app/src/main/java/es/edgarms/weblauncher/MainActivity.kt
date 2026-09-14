@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import es.edgarms.weblauncher.shortcuts.Shortcuts
 import es.edgarms.weblauncher.ui.PagesViewModel
 import es.edgarms.weblauncher.ui.edit.PageEditScreen
 import es.edgarms.weblauncher.ui.list.PageListScreen
@@ -55,6 +56,7 @@ private fun LauncherNavHost(viewModel: PagesViewModel = viewModel()) {
                 onAdd = { nav.navigate(PageEditRoute()) },
                 onOpen = { context.startActivity(WebActivity.intent(context, it.id)) },
                 onEdit = { nav.navigate(PageEditRoute(it.id)) },
+                onAddToHome = { Shortcuts.requestPin(context, it) },
             )
         }
         composable<PageEditRoute> { entry ->

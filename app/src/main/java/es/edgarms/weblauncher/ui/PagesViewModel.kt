@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import es.edgarms.weblauncher.WebLauncherApp
 import es.edgarms.weblauncher.model.Config
 import es.edgarms.weblauncher.model.Page
+import es.edgarms.weblauncher.shortcuts.Shortcuts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,10 @@ class PagesViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
-            _config.value = withContext(disk) { app.configStore.load() }
+            val loaded = withContext(disk) { app.configStore.load() }
+            _config.value = loaded
+            // Brings the launcher's shortcuts in line with the file, whatever changed it.
+            withContext(disk) { Shortcuts.sync(app, loaded) }
         }
     }
 
@@ -39,14 +43,20 @@ class PagesViewModel(application: Application) : AndroidViewModel(application) {
 
     fun delete(pageId: String) {
         update { config -> config.copy(pages = config.pages.filterNot { it.id == pageId }) }
-        viewModelScope.launch(disk) { app.winners.remove(pageId) }
+        viewModelScope.launch(disk) {
+            app.winners.remove(pageId)
+            Shortcuts.disable(app, pageId)
+        }
     }
 
     private fun update(change: (Config) -> Config) {
         val current = _config.value ?: return
         _config.value = change(current)
         viewModelScope.launch(disk) {
-            _config.value?.let { app.configStore.save(it) }
+            _config.value?.let {
+                app.configStore.save(it)
+                Shortcuts.sync(app, it)
+            }
         }
     }
 }

@@ -1,10 +1,32 @@
 # Plan: WebAppLauncher — un lanzador Android para mis apps web
 
-> **Estado: fases 0, 1 y 2 hechas.** La app ya sustituye al navegador: tocar una
-> página corre la carrera entre sus direcciones y la abre a pantalla completa, o
-> explica qué dijo cada dirección. Siguiente: fase 3 (accesos directos). Este
-> fichero se va actualizando en cada commit con el estado real, y se borra en el
-> último commit de la rama, justo antes del merge.
+> **Estado: fases 0 a 3 hechas.** La app ya sustituye al navegador y cada página
+> se puede anclar en la pantalla de inicio como si fuera una app. Siguiente:
+> fase 4 (iconos y remates). Este fichero se va actualizando en cada commit con
+> el estado real, y se borra en el último commit de la rama, justo antes del merge.
+>
+> **Fase 3, lo que hay:**
+> - `shortcuts/Shortcuts`: anclar con `requestPinShortcut` (si el lanzador no
+>   puede, un aviso en la lista), accesos dinámicos (mantener pulsado el icono
+>   del lanzador; el sistema admite 5) publicados al arrancar y en cada
+>   guardado, y los anclados se actualizan si cambia el nombre. Al borrar una
+>   página su acceso anclado queda desactivado con «Esta página se borró». Un
+>   fallo de accesos directos nunca impide guardar: solo se registra.
+> - `icons/TileBitmap`: la baldosa (inicial y color) como bitmap adaptativo,
+>   provisional hasta los iconos reales de la fase 4.
+> - Cada página es su propia tarea (`documentLaunchMode="intoExisting"` con una
+>   URI `weblauncher://page/<id>`), con su nombre y baldosa en recientes: se
+>   comporta como una app aparte. En la lista, el lápiz pasa a un menú ⋮ con
+>   Editar y Añadir a la pantalla de inicio.
+> - **Verificado en el móvil (Launcher3):** al arrancar se publican los accesos
+>   dinámicos; «Añadir a la pantalla de inicio» muestra el diálogo del lanzador y
+>   el icono J aparece en el escritorio (con la insignia de acceso directo que
+>   pone Android 9); tocarlo abre el Jackery directamente, en su propia tarea
+>   separada de la lista, y en recientes sale con su baldosa. Borrar una página
+>   quita su acceso dinámico.
+> - **Sin verificar todavía:** borrar una página que esté *anclada* (debería
+>   quedar gris con «Esta página se borró»), y que el anclado sobreviva a
+>   reiniciar el móvil (lo guarda el lanzador, no la app).
 >
 > **Fase 2, lo que hay:**
 > - `net/`: `UrlProber` + `OkHttpUrlProber` (HEAD, conexión 1,5 s, sin seguir

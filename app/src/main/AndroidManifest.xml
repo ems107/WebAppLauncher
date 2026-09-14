@@ -23,10 +23,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Rotation and keyboards must not recreate it: that would reload the page. -->
+        <!--
+            Each page is its own document task, so it sits in recents as an app of its own.
+            Rotation and keyboards must not recreate it: that would reload the page.
+        -->
         <activity
             android:name=".web.WebActivity"
+            android:autoRemoveFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation"
+            android:documentLaunchMode="intoExisting"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
     </application>

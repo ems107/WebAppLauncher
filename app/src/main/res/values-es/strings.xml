@@ -1,6 +1,10 @@
 <resources>
     <string name="add_page">Añadir página</string>
     <string name="edit">Editar</string>
+    <string name="more_options">Más opciones</string>
+    <string name="add_to_home">Añadir a la pantalla de inicio</string>
+    <string name="pin_unsupported">Este lanzador no permite añadir accesos directos a la pantalla de inicio</string>
+    <string name="shortcut_page_deleted">Esta página se borró</string>
     <string name="no_pages">Todavía no hay páginas.\nAñade una con el botón +.</string>
 
     <string name="new_page">Nueva página</string>
