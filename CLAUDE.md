@@ -4,9 +4,11 @@ An Android app that launches personal web apps served from a PC on the local
 network: a list of configured pages, each opening full screen in a WebView,
 each with its own shortcut on the home screen.
 
-**Work in progress on the `web-launcher` branch.** The agreed plan and its
-current status live in `web-launcher-progress.md`. Read it before writing code --
-it carries the phases, the verification steps and the decisions already settled.
+**The first version is implemented**: pages and their editor, the URL race,
+the full-screen WebView, home-screen shortcuts, site icons, and export/import.
+The README describes what it does. Checked on the real phone except for three
+things only Edgar's setup can show: a Jackery session surviving an exit, a
+cable-to-Wi-Fi switch of the PC, and pinned shortcuts after a reboot.
 
 ## Why this exists
 
@@ -52,7 +54,22 @@ that in DNS, each page carries an ordered list of URLs and the launcher probes
 them all at once, keeping the first that answers. Any HTTP response counts as
 alive -- a 401 proves the server is there, which is the only question being
 asked. This is a core feature, not a nicety: it is what makes switching between
-cable and Wi-Fi invisible.
+cable and Wi-Fi invisible. The address that answered last is tried alone first;
+only when it fails do the others race.
+
+## How the pieces fit
+
+- `data/PagesRepository` is **the one copy of the pages** while the app runs,
+  shared by the list, the editor and every open page. Do not give a screen its
+  own copy of the configuration: an open page stores the icon it fetched, and a
+  screen saving from an older copy would silently undo it.
+- `net/UrlRace` is pure logic over the `UrlProber` interface; `OkHttpUrlProber`
+  is the only part that touches the network.
+- `icons/IconCandidates` only decides where to look (manifest, maskable first →
+  `apple-touch-icon` → `rel="icon"` → `/favicon.ico`, never SVG), so it is JVM
+  tested; `IconFetcher` downloads. A page's icon is fetched the first time it
+  opens, which is when its server is known to answer.
+- `web/WebActivity` runs each page as its own document task.
 
 ## Environment on this machine
 
@@ -82,13 +99,16 @@ cable and Wi-Fi invisible.
   Compose screens with a focused text field or a dialog, so read tap
   coordinates off a screenshot instead -- screenshot pixels are screen pixels.
   `adb shell run-as es.edgarms.weblauncher cat files/config.json` shows what was
-  actually saved (debug builds only).
+  actually saved (debug builds only), and `adb shell dumpsys shortcut` what the
+  launcher was given. In PowerShell, do not name a helper `sc`: it is the alias
+  of `Set-Content` and wins.
 
 ## Conventions
 
 - **Language.** Code, comments, commits, documentation and this file: English.
   Anything written for Edgar to read -- answers, questions, implementation
-  plans, including `web-launcher-progress.md` -- Spanish.
+  plans and their progress files -- Spanish. The app's own strings exist in
+  English and Spanish (`values/` and `values-es/`).
 - **Kotlin with Jetpack Compose** (Material 3), package `es.edgarms.weblauncher`,
   `minSdk 26` (pinned shortcuts need it), `targetSdk 36`. `compileSdk` is 37.2
   because current AndroidX and OkHttp refuse anything older; that does not
@@ -97,13 +117,14 @@ cable and Wi-Fi invisible.
 - **Configuration is one JSON file** in `filesDir`, via `kotlinx.serialization`.
   No Room, no DataStore: the list is tiny, and the file being the format makes
   export and import free.
-- **Tests run on the JVM**, with no device. The URL race, the JSON round trip
-  and the icon fallback chain are all testable that way, and should stay that
-  way -- inject a fake prober rather than reaching for the network.
-- Branch and merge discipline comes from `../CLAUDE.local.md`. This is a written
-  plan, so it gets its own branch (`web-launcher`) off `main`, progressive
-  commits with the progress file updated alongside, and a `--no-ff` merge only
-  once Edgar has tried it and said so.
+- **Tests run on the JVM**, with no device. The URL race, the JSON round trip,
+  the import checks and the icon fallback chain are all testable that way, and
+  should stay that way -- inject a fake prober rather than reaching for the
+  network.
+- Branch and merge discipline comes from `../CLAUDE.local.md`: a written plan
+  gets its own branch, progressive commits with a progress file alongside, and
+  a `--no-ff` merge only once Edgar has tried it and said so; a direct change
+  goes straight to `main`.
 
 ## Traps that will cost an afternoon
 
@@ -116,3 +137,15 @@ cable and Wi-Fi invisible.
   app means retyping the PIN constantly.
 - Not every launcher supports pinning shortcuts. Check
   `isRequestPinShortcutSupported` and say so rather than failing silently.
+- With `documentLaunchMode="intoExisting"`, intents that differ only in extras
+  are the same document: every page would share one task. The page id also goes
+  into the intent's data URI (`weblauncher://page/<id>`) for that reason.
+- OkHttp reports every failed connection as "Failed to connect to /host:port";
+  the real reason (timed out, refused, no route) is in the cause chain. Read the
+  whole chain before telling the user why an address is dead.
+- An import must check that the file has a `pages` list before anything else:
+  `{}` decodes as a valid, empty configuration, and importing it would delete
+  every page.
+- Android cannot draw SVG icons without a library; skip them when looking for a
+  site's icon. The Jackery serves its manifest and icons without the PIN, but
+  `/favicon.ico` answers 401.

@@ -43,8 +43,8 @@ self-signed certificate on the PC with its authority pinned in the WebView.
 
 ## Building
 
-Requirements: JDK 17 or newer and the Android SDK (platform 37.2 and build-tools
-37; installing `cmdline-tools` alone is enough, no Android Studio). Point
+Requirements: JDK 17 or newer and the Android SDK with platform 37.2 (installing
+`cmdline-tools` alone is enough, no Android Studio). Point
 `sdk.dir` in `local.properties` at the SDK, or set `ANDROID_HOME`.
 
 ```
