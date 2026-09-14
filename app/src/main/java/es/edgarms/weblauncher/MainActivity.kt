@@ -66,7 +66,7 @@ private fun LauncherNavHost(viewModel: PagesViewModel = viewModel()) {
             val page = remember(pageId) { pageId?.let { config?.page(it) } }
             PageEditScreen(
                 page = page,
-                onSave = { nav.popFrom(entry); viewModel.save(it) },
+                onSave = { edited, icon -> nav.popFrom(entry); viewModel.save(edited, icon) },
                 onDelete = { nav.popFrom(entry); viewModel.delete(it.id) },
                 onBack = { nav.popFrom(entry) },
             )

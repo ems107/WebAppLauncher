@@ -23,8 +23,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import es.edgarms.weblauncher.BuildConfig
-import es.edgarms.weblauncher.icons.TileBitmap
+import es.edgarms.weblauncher.icons.PageIcons
 import es.edgarms.weblauncher.model.Page
 import es.edgarms.weblauncher.ui.theme.WebLauncherTheme
 import kotlinx.coroutines.launch
@@ -36,6 +37,7 @@ import kotlinx.coroutines.launch
 class WebActivity : ComponentActivity() {
     private val viewModel: PageViewModel by viewModels()
     private lateinit var webView: WebView
+    private lateinit var refresher: SwipeRefreshLayout
 
     private var loadedId = 0
     private var loadedUrl: String? = null
@@ -54,6 +56,12 @@ class WebActivity : ComponentActivity() {
         // Without cookies the session is gone on every exit; for the Jackery that is its PIN.
         CookieManager.getInstance().setAcceptCookie(true)
         webView = createWebView()
+        refresher = SwipeRefreshLayout(this).apply {
+            addView(webView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            setOnRefreshListener { webView.reload() }
+            // Pulling down refreshes only from the top of the page; anywhere else it scrolls.
+            setOnChildScrollUpCallback { _, _ -> webView.scrollY > 0 }
+        }
         onBackPressedDispatcher.addCallback(this, historyBack)
 
         lifecycleScope.launch {
@@ -74,7 +82,7 @@ class WebActivity : ComponentActivity() {
         setContent {
             WebLauncherTheme {
                 val state by viewModel.state.collectAsStateWithLifecycle()
-                PageScreen(state, webView, onRetry = viewModel::retry, onClose = ::finish)
+                PageScreen(state, refresher, onRetry = viewModel::retry, onClose = ::finish)
             }
         }
     }
@@ -85,17 +93,18 @@ class WebActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        (webView.parent as? ViewGroup)?.removeView(webView)
+        (refresher.parent as? ViewGroup)?.removeView(refresher)
+        refresher.removeView(webView)
         webView.destroy()
         super.onDestroy()
     }
 
-    /** The page's name and tile in recents, instead of the launcher's. */
+    /** The page's name and icon in recents, instead of the launcher's. */
     private fun describeTask(page: Page) {
         if (page == describedPage) return
         describedPage = page
         @Suppress("DEPRECATION") // The replacement needs API 33; this works everywhere.
-        setTaskDescription(ActivityManager.TaskDescription(page.name, TileBitmap.render(page.name, TASK_ICON_PX)))
+        setTaskDescription(ActivityManager.TaskDescription(page.name, PageIcons.bitmap(this, page)))
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -117,6 +126,7 @@ class WebActivity : ComponentActivity() {
             }
 
             override fun onPageFinished(view: WebView, url: String?) {
+                refresher.isRefreshing = false
                 if (clearHistoryWhenLoaded) {
                     clearHistoryWhenLoaded = false
                     view.clearHistory()
@@ -125,7 +135,9 @@ class WebActivity : ComponentActivity() {
             }
 
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                if (request.isForMainFrame) viewModel.onMainFrameError(error.description.toString())
+                if (!request.isForMainFrame) return
+                refresher.isRefreshing = false
+                viewModel.onMainFrameError(error.description.toString())
             }
         }
     }
@@ -141,7 +153,6 @@ class WebActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_PAGE_ID = "pageId"
-        private const val TASK_ICON_PX = 192
 
         /**
          * The data URI is what makes each page a separate document task: with

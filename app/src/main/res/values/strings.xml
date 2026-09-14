@@ -16,6 +16,10 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="page_name">Name</string>
+    <string name="icon_title">Icon</string>
+    <string name="icon_help">Taken from the site the first time the page opens.</string>
+    <string name="icon_choose">Choose image</string>
+    <string name="icon_reset">Use the site\'s</string>
     <string name="urls_title">Addresses</string>
     <string name="urls_help">The last one that worked is tried first. If it fails, all of them are tried at once.</string>
     <string name="url_label">Address %1$d</string>

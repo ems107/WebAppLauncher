@@ -4,10 +4,12 @@ import java.io.File
 import java.nio.file.StandardCopyOption
 
 internal object Files {
-    fun writeAtomically(file: File, text: String) {
+    fun writeAtomically(file: File, text: String) = writeAtomically(file, text.toByteArray())
+
+    fun writeAtomically(file: File, bytes: ByteArray) {
         file.parentFile?.mkdirs()
         val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeText(text)
+        tmp.writeBytes(bytes)
         replace(tmp, file)
     }
 

@@ -1,7 +1,7 @@
 package es.edgarms.weblauncher.web
 
+import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,19 +42,21 @@ import es.edgarms.weblauncher.net.FailureKind
 import es.edgarms.weblauncher.net.ProbeResult
 
 /**
- * The WebView, once there is something to show, with whatever the page is
- * doing laid over it: looking for a server, or explaining why none answered.
+ * The page itself, once there is something to show, with whatever is going on
+ * laid over it: looking for a server, or explaining why none answered.
+ *
+ * @param pageView the WebView, inside its pull-to-refresh.
  */
 @Composable
 fun PageScreen(
     state: PageState,
-    webView: WebView,
+    pageView: View,
     onRetry: () -> Unit,
     onClose: () -> Unit,
 ) {
-    var webShown by remember { mutableStateOf(false) }
+    var pageShown by remember { mutableStateOf(false) }
     LaunchedEffect(state) {
-        if (state is PageState.Ready) webShown = true
+        if (state is PageState.Ready) pageShown = true
     }
 
     Box(
@@ -63,11 +65,11 @@ fun PageScreen(
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        if (webShown) {
+        if (pageShown) {
             AndroidView(
                 factory = {
-                    (webView.parent as? ViewGroup)?.removeView(webView)
-                    webView
+                    (pageView.parent as? ViewGroup)?.removeView(pageView)
+                    pageView
                 },
                 modifier = Modifier.fillMaxSize(),
             )

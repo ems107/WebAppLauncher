@@ -6,7 +6,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import es.edgarms.weblauncher.R
-import es.edgarms.weblauncher.icons.TileBitmap
+import es.edgarms.weblauncher.icons.PageIcons
 import es.edgarms.weblauncher.model.Config
 import es.edgarms.weblauncher.model.Page
 import es.edgarms.weblauncher.web.WebActivity
@@ -14,8 +14,6 @@ import es.edgarms.weblauncher.web.WebActivity
 /** Shortcuts use the page id as theirs, so every call below can find a page's shortcut again. */
 object Shortcuts {
     private const val TAG = "Shortcuts"
-    /** What Android keeps of a shortcut icon anyway ("Max icon dim" in `dumpsys shortcut`). */
-    private const val ICON_SIZE_PX = 192
 
     /**
      * Asks the launcher to put [page] on the home screen; the launcher shows its
@@ -28,8 +26,8 @@ object Shortcuts {
 
     /**
      * Publishes the pages as the shortcuts shown on a long press of the app
-     * icon, and refreshes pinned ones, so a renamed page is renamed on the home
-     * screen too. Never fails a save: a shortcut problem is only logged.
+     * icon, and refreshes pinned ones, so a renamed page or a new icon reaches
+     * the home screen too. Never fails a save: a shortcut problem is only logged.
      */
     fun sync(context: Context, config: Config) {
         try {
@@ -59,7 +57,7 @@ object Shortcuts {
         ShortcutInfoCompat.Builder(context, page.id)
             .setShortLabel(page.name.ifBlank { "?" })
             .setLongLabel(page.name.ifBlank { "?" })
-            .setIcon(IconCompat.createWithAdaptiveBitmap(TileBitmap.render(page.name, ICON_SIZE_PX)))
+            .setIcon(IconCompat.createWithAdaptiveBitmap(PageIcons.bitmap(context, page)))
             .setIntent(WebActivity.intent(context, page.id))
             .setRank(rank)
             .build()

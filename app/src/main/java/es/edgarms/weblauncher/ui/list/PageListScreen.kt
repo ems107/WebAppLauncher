@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.edgarms.weblauncher.R
 import es.edgarms.weblauncher.model.Page
-import es.edgarms.weblauncher.ui.PageTile
+import es.edgarms.weblauncher.ui.PageIcon
 import kotlinx.coroutines.launch
 
 /**
@@ -94,7 +94,7 @@ fun PageListScreen(
                         supportingContent = {
                             Text(page.urls.joinToString("\n"), maxLines = 3, overflow = TextOverflow.Ellipsis)
                         },
-                        leadingContent = { PageTile(page.name) },
+                        leadingContent = { PageIcon(page) },
                         trailingContent = {
                             PageMenu(
                                 onEdit = { onEdit(page) },

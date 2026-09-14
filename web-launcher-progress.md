@@ -1,9 +1,39 @@
 # Plan: WebAppLauncher — un lanzador Android para mis apps web
 
-> **Estado: fases 0 a 3 hechas.** La app ya sustituye al navegador y cada página
-> se puede anclar en la pantalla de inicio como si fuera una app. Siguiente:
-> fase 4 (iconos y remates). Este fichero se va actualizando en cada commit con
-> el estado real, y se borra en el último commit de la rama, justo antes del merge.
+> **Estado: fases 0 a 4 hechas.** La app ya sustituye al navegador, cada página
+> se puede anclar en la pantalla de inicio como si fuera una app y lleva el icono
+> de su web. Siguiente: fase 5 (exportar/importar y README). Este fichero se va
+> actualizando en cada commit con el estado real, y se borra en el último commit
+> de la rama, justo antes del merge.
+>
+> **Fase 4, lo que hay:**
+> - `data/PagesRepository`: una sola copia de las páginas para toda la app. La
+>   lista, el editor y cada página abierta la comparten, así que un icono que
+>   descarga una página abierta no lo pisa un guardado de la lista con una copia
+>   vieja. El editor ya no decide el `iconPath`: dice qué hizo con el icono
+>   (dejarlo, elegir imagen, volver al de la web).
+> - `icons/`: `IconCandidates` decide dónde buscar (manifest, prefiriendo
+>   maskable y luego el más grande → `apple-touch-icon` → `rel="icon"` →
+>   `/favicon.ico`; nunca SVG) y es JVM puro; `IconFetcher` descarga siguiendo
+>   esa cadena hasta que algo se decodifica (ignora iconos de menos de 48 px);
+>   `IconBitmaps` recorta los maskable a sangre y encaja los normales en la zona
+>   segura sobre blanco; `PageIcons` los guarda como `icons/<id>-<momento>.png`
+>   (nombre nuevo cada vez, para que nada muestre el anterior en caché).
+> - El icono se busca **la primera vez que la página abre**, que es cuando se sabe
+>   que el servidor contesta; una vez por arranque de la app. Se ve en la lista, en
+>   los accesos directos (anclados incluidos) y en recientes.
+> - Editor: sección Icono con vista previa, «Elegir imagen» (selector de fotos del
+>   sistema) y «Usar el de la web».
+> - Tirar hacia abajo desde arriba de la página la recarga (`SwipeRefreshLayout`).
+> - Tests JVM: 40 en verde (9 nuevos de la cadena de iconos, con el HTML y el
+>   manifest reales del Jackery).
+> - **Verificado en el móvil:** al abrir el Jackery se descargó su
+>   `icon-maskable-512.png` (el demonio sirve manifest e iconos sin PIN; el
+>   `favicon.ico` da 401) y apareció en la lista y en el acceso anclado del
+>   escritorio, bien recortado. Tirar hacia abajo muestra el indicador y recarga.
+>   «Elegir imagen» abre el selector de fotos.
+> - **Sin verificar:** elegir de verdad una imagen y guardarla (el selector
+>   mostraba fotos personales del móvil y no toqué ninguna), y «Usar el de la web».
 >
 > **Fase 3, lo que hay:**
 > - `shortcuts/Shortcuts`: anclar con `requestPinShortcut` (si el lanzador no

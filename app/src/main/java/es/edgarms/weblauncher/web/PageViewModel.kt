@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import es.edgarms.weblauncher.WebLauncherApp
+import es.edgarms.weblauncher.icons.PageIcons
 import es.edgarms.weblauncher.model.Page
 import es.edgarms.weblauncher.net.Attempt
 import es.edgarms.weblauncher.net.FailureKind
@@ -68,8 +69,8 @@ class PageViewModel(application: Application, savedState: SavedStateHandle) : An
     private fun open() {
         job?.cancel()
         job = viewModelScope.launch {
-            // Read again every time: the page may have been edited since this screen opened.
-            val page = withContext(Dispatchers.IO) { pageId?.let { app.configStore.load().page(it) } }
+            // Looked up every time: the page may have been edited since this screen opened.
+            val page = pageId?.let { app.pages.loaded().page(it) }
             if (page == null) _state.value = PageState.Missing else raceFor(page)
         }
     }
@@ -90,9 +91,25 @@ class PageViewModel(application: Application, savedState: SavedStateHandle) : An
             is RaceResult.Won -> {
                 withContext(Dispatchers.IO) { app.winners.put(page.id, result.url) }
                 wonAt = SystemClock.elapsedRealtime()
+                fetchIconIfMissing(page.id, result.url)
                 PageState.Ready(page, result.url, ++loads)
             }
             is RaceResult.Lost -> PageState.Unreachable(page, result.attempts)
+        }
+    }
+
+    /**
+     * The first time a page without an icon opens, its site is asked for one:
+     * this is the moment the server is known to answer. Runs in the app's scope,
+     * so closing the page straight away does not waste the download.
+     */
+    private fun fetchIconIfMissing(pageId: String, url: String) {
+        if (app.pages.config.value?.page(pageId)?.iconPath != null) return
+        if (!app.iconAttempts.add(pageId)) return
+        app.scope.launch {
+            val bitmap = app.iconFetcher.fetch(url) ?: return@launch
+            val path = withContext(Dispatchers.IO) { PageIcons.save(app, pageId, bitmap) }
+            app.pages.setIcon(pageId, path)
         }
     }
 
