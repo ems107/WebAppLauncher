@@ -72,6 +72,16 @@ cable and Wi-Fi invisible.
   `unauthorized`) before anything else is worth trying. Edgar gives the address
   and unlock PIN; neither is written into the repository. Visual checks are
   `adb exec-out screencap -p` into the scratchpad, never into the repo.
+- **The test phone is a Urovo DT50**: Android 9 (API 28), 720x1440. Its WebView
+  provider is Chrome (138 when checked), not the system WebView package, which
+  is stuck at 74 and disabled -- so modern JavaScript works. If pages ever break
+  on syntax, check `adb shell dumpsys webviewupdate` before blaming the page.
+  A cold start takes about four seconds: wait before taking a screenshot.
+- **Driving the UI from adb**: `uiautomator dump` fails ("null root node") on
+  Compose screens with a focused text field or a dialog, so read tap
+  coordinates off a screenshot instead -- screenshot pixels are screen pixels.
+  `adb shell run-as es.edgarms.weblauncher cat files/config.json` shows what was
+  actually saved (debug builds only).
 
 ## Conventions
 

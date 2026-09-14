@@ -1,0 +1,22 @@
+<resources>
+    <string name="add_page">Añadir página</string>
+    <string name="no_pages">Todavía no hay páginas.\nAñade una con el botón +.</string>
+
+    <string name="new_page">Nueva página</string>
+    <string name="edit_page">Editar página</string>
+    <string name="back">Atrás</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Borrar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="page_name">Nombre</string>
+    <string name="urls_title">Direcciones</string>
+    <string name="urls_help">Se prueba primero la última que funcionó. Si falla, se prueban todas a la vez.</string>
+    <string name="url_label">Dirección %1$d</string>
+    <string name="url_invalid">Tiene que empezar por http:// o https://</string>
+    <string name="move_up">Subir</string>
+    <string name="move_down">Bajar</string>
+    <string name="remove_url">Quitar dirección</string>
+    <string name="add_url">Añadir dirección</string>
+    <string name="delete_page_title">¿Borrar la página?</string>
+    <string name="delete_page_message">«%1$s» desaparecerá del lanzador.</string>
+</resources>

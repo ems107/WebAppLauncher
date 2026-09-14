@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">Web Launcher</string>
+
+    <string name="add_page">Add page</string>
+    <string name="no_pages">No pages yet.\nAdd one with the + button.</string>
+
+    <string name="new_page">New page</string>
+    <string name="edit_page">Edit page</string>
+    <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="page_name">Name</string>
+    <string name="urls_title">Addresses</string>
+    <string name="urls_help">The last one that worked is tried first. If it fails, all of them are tried at once.</string>
+    <string name="url_label">Address %1$d</string>
+    <string name="url_invalid">Must start with http:// or https://</string>
+    <string name="move_up">Move up</string>
+    <string name="move_down">Move down</string>
+    <string name="remove_url">Remove address</string>
+    <string name="add_url">Add address</string>
+    <string name="delete_page_title">Delete page?</string>
+    <string name="delete_page_message">“%1$s” will be removed from the launcher.</string>
 </resources>

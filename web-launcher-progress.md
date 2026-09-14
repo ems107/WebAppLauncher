@@ -1,11 +1,26 @@
 # Plan: WebAppLauncher — un lanzador Android para mis apps web
 
-> **Estado: fase 0 hecha salvo instalar en el móvil.** Repositorio creado, rama
-> `web-launcher`, SDK instalado y esqueleto Gradle que compila (`assembleDebug`
-> en verde) mostrando una lista vacía. Pendiente: el móvil sale `unauthorized`
-> en adb y hay que aceptar la huella en el teléfono antes de instalar. Este
+> **Estado: fases 0 y 1 hechas.** Esqueleto Gradle que compila e instala; la
+> lista de páginas y el editor funcionan en el móvil, y la configuración se
+> guarda en `filesDir/config.json`. Siguiente: fase 2 (abrir páginas). Este
 > fichero se va actualizando en cada commit con el estado real, y se borra en el
 > último commit de la rama, justo antes del merge.
+>
+> **Fase 1, lo que hay:**
+> - `model/`: `Page`, `Config` (+ `ConfigJson`), `PageUrls.isValid`, `Tile`
+>   (inicial y color derivado del nombre, reutilizable para los iconos de la fase 4).
+> - `data/`: `ConfigStore` (escritura atómica; un fichero corrupto se aparta como
+>   `config.json.bad` y se arranca vacío) y `LastWinnerStore` (URL ganadora por
+>   página, en `winners.json`, fuera de lo exportable).
+> - `ui/`: lista (vacía con mensaje, tocar una página la edita; en la fase 2 pasará
+>   a abrirla) y editor (nombre, direcciones con subir/bajar/quitar/añadir,
+>   validación `http(s)://`, borrar con confirmación). Textos en inglés y español.
+>   Tema azul propio para Android < 12; en 12+ usa los colores dinámicos.
+> - Tests JVM: 13 (almacenes, validación de URLs, baldosa), todos en verde.
+>
+> **El móvil de pruebas:** Urovo DT50, Android 9 (API 28), 720×1440. El WebView
+> que usa es el de **Chrome 138** (el WebView de sistema, 74, está desactivado),
+> así que JavaScript moderno como `?.` y `??` funciona.
 >
 > **Cambios respecto a lo previsto al implementar:**
 > - adb va **por red** (`adb connect`), no por USB.
