@@ -4,9 +4,11 @@ An Android app that launches personal web apps served from a PC on the local
 network: a list of configured pages, each opening full screen in a WebView,
 each with its own shortcut on the home screen.
 
-**Nothing is implemented yet.** This repository currently holds the agreed plan
-(`web-launcher-progress.md`) and this file. Read the plan before writing code --
-it carries the phases, the verification steps and the decisions already settled.
+**The first version is implemented**: pages and their editor, the URL race,
+the full-screen WebView, home-screen shortcuts, site icons, and export/import.
+The README describes what it does. Checked on the real phone except for three
+things only Edgar's setup can show: a Jackery session surviving an exit, a
+cable-to-Wi-Fi switch of the PC, and pinned shortcuts after a reboot.
 
 ## Why this exists
 
@@ -52,38 +54,77 @@ that in DNS, each page carries an ordered list of URLs and the launcher probes
 them all at once, keeping the first that answers. Any HTTP response counts as
 alive -- a 401 proves the server is there, which is the only question being
 asked. This is a core feature, not a nicety: it is what makes switching between
-cable and Wi-Fi invisible.
+cable and Wi-Fi invisible. The address that answered last is tried alone first;
+only when it fails do the others race.
+
+## How the pieces fit
+
+- `data/PagesRepository` is **the one copy of the pages** while the app runs,
+  shared by the list, the editor and every open page. Do not give a screen its
+  own copy of the configuration: an open page stores the icon it fetched, and a
+  screen saving from an older copy would silently undo it.
+- `net/UrlRace` is pure logic over the `UrlProber` interface; `OkHttpUrlProber`
+  is the only part that touches the network.
+- `icons/IconCandidates` only decides where to look (manifest, maskable first →
+  `apple-touch-icon` → `rel="icon"` → `/favicon.ico`, never SVG), so it is JVM
+  tested; `IconFetcher` downloads. A page's icon is fetched the first time it
+  opens, which is when its server is known to answer.
+- `web/WebActivity` runs each page as its own document task.
 
 ## Environment on this machine
 
-- **JDK 21 is already installed** at `C:\Program Files\Android\openjdk\jdk-21.0.8`
-  (left by another installer). Gradle 8.x and AGP 8.x accept it.
-- **The Android SDK is not installed.** Android Studio is deliberately not used;
-  install `cmdline-tools` only, unzipped into
-  `%LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest`, then use `sdkmanager` for
-  `platform-tools`, the platform and the build tools.
+- **JDK 21** is at `C:\Program Files\Android\openjdk\jdk-21.0.8` (left by another
+  installer). `JAVA_HOME` is not set system-wide: set it in the shell before
+  running Gradle.
+- **The Android SDK** lives in `%LOCALAPPDATA%\Android\Sdk`, installed from
+  `cmdline-tools` only -- Android Studio is deliberately not used.
+  `local.properties` (ignored) points `sdk.dir` at it. `sdkmanager` now just
+  forwards to the new Android CLI: install packages with
+  `cmdline-tools\latest\bin\android.exe --no-metrics sdk install "<package>"`.
+  It exits with code 9 even when the install succeeded; check the folder.
 - **Building happens from the terminal** with the Gradle wrapper, not from an
   IDE. There is no emulator: every visual check happens on the real phone.
-- **Installing during development is `adb` over USB.** USB debugging has to be
-  on; `adb devices` must see the phone before anything else is worth trying.
+- **The phone is reached with `adb` over the network**, not USB:
+  `adb connect <phone-ip>:5555`, and `adb devices` must say `device` (not
+  `unauthorized`) before anything else is worth trying. Edgar gives the address
+  and unlock PIN; neither is written into the repository. Visual checks are
+  `adb exec-out screencap -p` into the scratchpad, never into the repo.
+- **The test phone is a Urovo DT50**: Android 9 (API 28), 720x1440, with the
+  stock Launcher3 as home app (it supports pinned shortcuts). Its WebView
+  provider is Chrome (138 when checked), not the system WebView package, which
+  is stuck at 74 and disabled -- so modern JavaScript works. If pages ever break
+  on syntax, check `adb shell dumpsys webviewupdate` before blaming the page.
+  A cold start takes about four seconds: wait before taking a screenshot.
+- **Driving the UI from adb**: `uiautomator dump` fails ("null root node") on
+  Compose screens with a focused text field or a dialog, so read tap
+  coordinates off a screenshot instead -- screenshot pixels are screen pixels.
+  `adb shell run-as es.edgarms.weblauncher cat files/config.json` shows what was
+  actually saved (debug builds only), and `adb shell dumpsys shortcut` what the
+  launcher was given. In PowerShell, do not name a helper `sc`: it is the alias
+  of `Set-Content` and wins.
 
 ## Conventions
 
 - **Language.** Code, comments, commits, documentation and this file: English.
   Anything written for Edgar to read -- answers, questions, implementation
-  plans, including `web-launcher-progress.md` -- Spanish.
+  plans and their progress files -- Spanish. The app's own strings exist in
+  English and Spanish (`values/` and `values-es/`).
 - **Kotlin with Jetpack Compose** (Material 3), package `es.edgarms.weblauncher`,
-  `minSdk 26` (pinned shortcuts need it), `targetSdk 36`.
+  `minSdk 26` (pinned shortcuts need it), `targetSdk 36`. `compileSdk` is 37.2
+  because current AndroidX and OkHttp refuse anything older; that does not
+  change runtime behaviour. Versions are pinned in `gradle/libs.versions.toml`
+  (AGP 9, whose built-in Kotlin replaces the `kotlin-android` plugin).
 - **Configuration is one JSON file** in `filesDir`, via `kotlinx.serialization`.
   No Room, no DataStore: the list is tiny, and the file being the format makes
   export and import free.
-- **Tests run on the JVM**, with no device. The URL race, the JSON round trip
-  and the icon fallback chain are all testable that way, and should stay that
-  way -- inject a fake prober rather than reaching for the network.
-- Branch and merge discipline comes from `../CLAUDE.local.md`. This is a written
-  plan, so it gets its own branch (`web-launcher`) off `main`, progressive
-  commits with the progress file updated alongside, and a `--no-ff` merge only
-  once Edgar has tried it and said so.
+- **Tests run on the JVM**, with no device. The URL race, the JSON round trip,
+  the import checks and the icon fallback chain are all testable that way, and
+  should stay that way -- inject a fake prober rather than reaching for the
+  network.
+- Branch and merge discipline comes from `../CLAUDE.local.md`: a written plan
+  gets its own branch, progressive commits with a progress file alongside, and
+  a `--no-ff` merge only once Edgar has tried it and said so; a direct change
+  goes straight to `main`.
 
 ## Traps that will cost an afternoon
 
@@ -96,3 +137,15 @@ cable and Wi-Fi invisible.
   app means retyping the PIN constantly.
 - Not every launcher supports pinning shortcuts. Check
   `isRequestPinShortcutSupported` and say so rather than failing silently.
+- With `documentLaunchMode="intoExisting"`, intents that differ only in extras
+  are the same document: every page would share one task. The page id also goes
+  into the intent's data URI (`weblauncher://page/<id>`) for that reason.
+- OkHttp reports every failed connection as "Failed to connect to /host:port";
+  the real reason (timed out, refused, no route) is in the cause chain. Read the
+  whole chain before telling the user why an address is dead.
+- An import must check that the file has a `pages` list before anything else:
+  `{}` decodes as a valid, empty configuration, and importing it would delete
+  every page.
+- Android cannot draw SVG icons without a library; skip them when looking for a
+  site's icon. The Jackery serves its manifest and icons without the PIN, but
+  `/favicon.ico` answers 401.

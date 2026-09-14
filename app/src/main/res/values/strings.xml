@@ -1,0 +1,71 @@
+<resources>
+    <string name="app_name">Web Launcher</string>
+
+    <string name="add_page">Add page</string>
+    <string name="edit">Edit</string>
+    <string name="more_options">More options</string>
+    <string name="add_to_home">Add to home screen</string>
+    <string name="pin_unsupported">This launcher cannot add shortcuts to the home screen</string>
+    <string name="shortcut_page_deleted">This page was deleted</string>
+    <string name="no_pages">No pages yet.\nAdd one with the + button.</string>
+
+    <string name="export_config">Export configuration</string>
+    <string name="import_config">Import configuration</string>
+    <string name="export_done">Configuration exported</string>
+    <string name="export_failed">Could not write the file</string>
+    <string name="import_title">Replace the configuration?</string>
+    <string name="import_confirm">Import</string>
+    <plurals name="import_file_pages">
+        <item quantity="one">The file has one page.</item>
+        <item quantity="other">The file has %1$d pages.</item>
+    </plurals>
+    <plurals name="import_replaces_pages">
+        <item quantity="one">It will replace the page there is now.</item>
+        <item quantity="other">It will replace the %1$d pages there are now.</item>
+    </plurals>
+    <string name="import_replaces_nothing">There are no pages now, so nothing is lost.</string>
+    <string name="import_icons_note">Icons are fetched again from each site.</string>
+    <plurals name="import_done">
+        <item quantity="one">Imported one page</item>
+        <item quantity="other">Imported %1$d pages</item>
+    </plurals>
+    <string name="import_unreadable">Could not read the file</string>
+    <string name="import_not_config">That file is not a Web Launcher configuration</string>
+    <string name="import_newer">That file comes from a newer version of the app</string>
+    <string name="import_bad_page">The page “%1$s” in the file is not valid</string>
+
+    <string name="new_page">New page</string>
+    <string name="edit_page">Edit page</string>
+    <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="page_name">Name</string>
+    <string name="icon_title">Icon</string>
+    <string name="icon_help">Taken from the site the first time the page opens.</string>
+    <string name="icon_choose">Choose image</string>
+    <string name="icon_reset">Use the site\'s</string>
+    <string name="urls_title">Addresses</string>
+    <string name="urls_help">The last one that worked is tried first. If it fails, all of them are tried at once.</string>
+    <string name="url_label">Address %1$d</string>
+    <string name="url_invalid">Must start with http:// or https://</string>
+    <string name="move_up">Move up</string>
+    <string name="move_down">Move down</string>
+    <string name="remove_url">Remove address</string>
+    <string name="add_url">Add address</string>
+    <string name="delete_page_title">Delete page?</string>
+    <string name="delete_page_message">“%1$s” will be removed from the launcher.</string>
+
+    <string name="probing">Looking for %1$s…</string>
+    <string name="unreachable_title">%1$s is not answering</string>
+    <string name="unreachable_help">These addresses were tried:</string>
+    <string name="probe_alive">Answered (HTTP %1$d)</string>
+    <string name="failure_timeout">No answer in time</string>
+    <string name="failure_refused">Connection refused: the server may be stopped</string>
+    <string name="failure_unreachable">Network unreachable from this phone</string>
+    <string name="failure_unknown_host">Unknown host name</string>
+    <string name="failure_other">Could not connect</string>
+    <string name="retry">Retry</string>
+    <string name="close">Close</string>
+    <string name="page_missing">This page no longer exists in the launcher.</string>
+</resources>
