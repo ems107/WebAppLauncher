@@ -4,8 +4,8 @@ An Android app that launches personal web apps served from a PC on the local
 network: a list of configured pages, each opening full screen in a WebView,
 each with its own shortcut on the home screen.
 
-**Nothing is implemented yet.** This repository currently holds the agreed plan
-(`web-launcher-progress.md`) and this file. Read the plan before writing code --
+**Work in progress on the `web-launcher` branch.** The agreed plan and its
+current status live in `web-launcher-progress.md`. Read it before writing code --
 it carries the phases, the verification steps and the decisions already settled.
 
 ## Why this exists
@@ -56,16 +56,22 @@ cable and Wi-Fi invisible.
 
 ## Environment on this machine
 
-- **JDK 21 is already installed** at `C:\Program Files\Android\openjdk\jdk-21.0.8`
-  (left by another installer). Gradle 8.x and AGP 8.x accept it.
-- **The Android SDK is not installed.** Android Studio is deliberately not used;
-  install `cmdline-tools` only, unzipped into
-  `%LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest`, then use `sdkmanager` for
-  `platform-tools`, the platform and the build tools.
+- **JDK 21** is at `C:\Program Files\Android\openjdk\jdk-21.0.8` (left by another
+  installer). `JAVA_HOME` is not set system-wide: set it in the shell before
+  running Gradle.
+- **The Android SDK** lives in `%LOCALAPPDATA%\Android\Sdk`, installed from
+  `cmdline-tools` only -- Android Studio is deliberately not used.
+  `local.properties` (ignored) points `sdk.dir` at it. `sdkmanager` now just
+  forwards to the new Android CLI: install packages with
+  `cmdline-tools\latest\bin\android.exe --no-metrics sdk install "<package>"`.
+  It exits with code 9 even when the install succeeded; check the folder.
 - **Building happens from the terminal** with the Gradle wrapper, not from an
   IDE. There is no emulator: every visual check happens on the real phone.
-- **Installing during development is `adb` over USB.** USB debugging has to be
-  on; `adb devices` must see the phone before anything else is worth trying.
+- **The phone is reached with `adb` over the network**, not USB:
+  `adb connect <phone-ip>:5555`, and `adb devices` must say `device` (not
+  `unauthorized`) before anything else is worth trying. Edgar gives the address
+  and unlock PIN; neither is written into the repository. Visual checks are
+  `adb exec-out screencap -p` into the scratchpad, never into the repo.
 
 ## Conventions
 
@@ -73,7 +79,10 @@ cable and Wi-Fi invisible.
   Anything written for Edgar to read -- answers, questions, implementation
   plans, including `web-launcher-progress.md` -- Spanish.
 - **Kotlin with Jetpack Compose** (Material 3), package `es.edgarms.weblauncher`,
-  `minSdk 26` (pinned shortcuts need it), `targetSdk 36`.
+  `minSdk 26` (pinned shortcuts need it), `targetSdk 36`. `compileSdk` is 37.2
+  because current AndroidX and OkHttp refuse anything older; that does not
+  change runtime behaviour. Versions are pinned in `gradle/libs.versions.toml`
+  (AGP 9, whose built-in Kotlin replaces the `kotlin-android` plugin).
 - **Configuration is one JSON file** in `filesDir`, via `kotlinx.serialization`.
   No Room, no DataStore: the list is tiny, and the file being the format makes
   export and import free.

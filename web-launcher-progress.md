@@ -1,9 +1,19 @@
 # Plan: WebAppLauncher — un lanzador Android para mis apps web
 
-> **Estado: sin empezar.** Nada implementado todavía, ni siquiera el repositorio
-> de git. La fase 0 empieza por instalar el SDK y crear el esqueleto. Este
+> **Estado: fase 0 hecha salvo instalar en el móvil.** Repositorio creado, rama
+> `web-launcher`, SDK instalado y esqueleto Gradle que compila (`assembleDebug`
+> en verde) mostrando una lista vacía. Pendiente: el móvil sale `unauthorized`
+> en adb y hay que aceptar la huella en el teléfono antes de instalar. Este
 > fichero se va actualizando en cada commit con el estado real, y se borra en el
 > último commit de la rama, justo antes del merge.
+>
+> **Cambios respecto a lo previsto al implementar:**
+> - adb va **por red** (`adb connect`), no por USB.
+> - Versiones fijadas: Gradle 9.7.1, AGP 9.4.0 (Kotlin integrado en AGP),
+>   Kotlin 2.4.20, Compose BOM 2026.09.00. Las AndroidX y OkHttp actuales exigen
+>   **`compileSdk` 37.2**; `targetSdk` sigue en 36.
+> - `sdkmanager` ya delega en la nueva Android CLI (`cmdline-tools\latest\bin\android.exe sdk install ...`),
+>   que sale con código 9 aunque instale bien.
 
 ## Contexto
 
