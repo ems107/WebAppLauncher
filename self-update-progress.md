@@ -186,8 +186,7 @@ PowerShell 5.1 y solo ASCII.
 
 - [x] 1. Versión en `gradle.properties` (0.0.1, `versionCode` derivado), firma de release desde `%USERPROFILE%\.android\weblauncher-release.properties` (keystore generado; APK de release verificado con `apksigner`), `BuildConfig.UPDATE_REPO`/`UPDATES_ENABLED`, dependencia de WorkManager. Repo público creado y `main` subido.
 - [x] 2. `Version` y `ReleaseFeed` con tests (en verde): se ignoran borradores, prereleases, tags raros y releases sin APK; las notas cubren todas las versiones que se saltan.
-- [ ] 3. `GitHubReleaseSource`, `UpdateStore`, `UpdateRepository`, worker.
-- [ ] 4. Descarga e instalación.
+- [x] 3 y 4 (un solo commit, porque `UpdateRepository` ya incluye la instalación). `GitHubReleaseSource` (ETag, User-Agent, límite de cuota), `UpdateStore` (`update.json`), `UpdateChecker` (lógica de «reciente» a 50 min, olvida lo aprendido por otra versión), `UpdateCheckWorker` (1 h, con red), `ApkDownloader` (reanuda con `Range`, 5 intentos, límite por silencio), `UpdateRepository` (estado, verificación del APK con `getPackageArchiveInfo`, sesión de `PackageInstaller`), `InstallResultReceiver`, permiso en el manifiesto. Tests en verde en la JVM; aún sin probar en el móvil.
 - [ ] 5. Tarjeta, menú y strings.
 - [ ] 6. `scripts/release.ps1`.
 - [ ] 7. Documentación.
