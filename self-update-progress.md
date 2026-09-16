@@ -187,7 +187,7 @@ PowerShell 5.1 y solo ASCII.
 - [x] 1. Versión en `gradle.properties` (0.0.1, `versionCode` derivado), firma de release desde `%USERPROFILE%\.android\weblauncher-release.properties` (keystore generado; APK de release verificado con `apksigner`), `BuildConfig.UPDATE_REPO`/`UPDATES_ENABLED`, dependencia de WorkManager. Repo público creado y `main` subido.
 - [x] 2. `Version` y `ReleaseFeed` con tests (en verde): se ignoran borradores, prereleases, tags raros y releases sin APK; las notas cubren todas las versiones que se saltan.
 - [x] 3 y 4 (un solo commit, porque `UpdateRepository` ya incluye la instalación). `GitHubReleaseSource` (ETag, User-Agent, límite de cuota), `UpdateStore` (`update.json`), `UpdateChecker` (lógica de «reciente» a 50 min, olvida lo aprendido por otra versión), `UpdateCheckWorker` (1 h, con red), `ApkDownloader` (reanuda con `Range`, 5 intentos, límite por silencio), `UpdateRepository` (estado, verificación del APK con `getPackageArchiveInfo`, sesión de `PackageInstaller`), `InstallResultReceiver`, permiso en el manifiesto. Tests en verde en la JVM; aún sin probar en el móvil.
-- [ ] 5. Tarjeta, menú y strings.
+- [x] 5. `UpdateBanner` (tarjeta arriba de la lista, notas en diálogo, permiso de orígenes desconocidos con vuelta automática), entrada «Buscar actualizaciones» con la versión instalada en el menú ⋮ (oculta en debug), `UpdateViewModel`, comprobación al volver a la lista si toca, textos en/es. Compila en debug y release; sin probar aún en el móvil.
 - [ ] 6. `scripts/release.ps1`.
 - [ ] 7. Documentación.
 - [ ] Pruebas en el DT50 (0.0.1 → 0.0.2 → 0.0.3).

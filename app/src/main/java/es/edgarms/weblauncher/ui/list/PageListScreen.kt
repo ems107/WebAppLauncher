@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -58,6 +59,7 @@ import kotlinx.coroutines.launch
  * @param onExport writes the configuration to the file chosen; false if it failed.
  * @param onReadImport checks the file chosen, without changing anything yet.
  * @param onApplyImport replaces every page with a checked import.
+ * @param updates null in builds that do not update themselves.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,6 +72,7 @@ fun PageListScreen(
     onExport: suspend (Uri) -> Boolean,
     onReadImport: suspend (Uri) -> ImportResult,
     onApplyImport: (Config) -> Unit,
+    updates: UpdateControls?,
 ) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
@@ -104,6 +107,15 @@ fun PageListScreen(
                         onExport = { exportLauncher.launch(EXPORT_FILE_NAME) },
                         // Any type: phones disagree on what a .json file is, and the content is checked anyway.
                         onImport = { importLauncher.launch(arrayOf("*/*")) },
+                        runningVersion = updates?.runningVersion,
+                        onCheckUpdates = updates?.let { controls ->
+                            {
+                                scope.launch {
+                                    val outcome = controls.onCheck()
+                                    snackbar.showSnackbar(describe(context, outcome, controls.runningVersion))
+                                }
+                            }
+                        },
                     )
                 },
             )
@@ -115,45 +127,46 @@ fun PageListScreen(
             }
         },
     ) { padding ->
-        when {
-            pages == null -> Box(Modifier.fillMaxSize().padding(padding))
-            pages.isEmpty() -> Box(
-                Modifier.fillMaxSize().padding(padding).padding(32.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    stringResource(R.string.no_pages),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            else -> LazyColumn(
-                contentPadding = PaddingValues(
-                    top = padding.calculateTopPadding(),
-                    // Room for the button, so it never covers the last page.
-                    bottom = padding.calculateBottomPadding() + 88.dp,
-                ),
-            ) {
-                items(pages, key = { it.id }) { page ->
-                    ListItem(
-                        headlineContent = { Text(page.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        supportingContent = {
-                            Text(page.urls.joinToString("\n"), maxLines = 3, overflow = TextOverflow.Ellipsis)
-                        },
-                        leadingContent = { PageIcon(page) },
-                        trailingContent = {
-                            PageMenu(
-                                onEdit = { onEdit(page) },
-                                onAddToHome = {
-                                    if (!onAddToHome(page)) {
-                                        scope.launch { snackbar.showSnackbar(context.getString(R.string.pin_unsupported)) }
-                                    }
-                                },
-                            )
-                        },
-                        modifier = Modifier.clickable { onOpen(page) },
+        Column(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
+            updates?.let { UpdateBanner(it) }
+            val bottom = padding.calculateBottomPadding()
+            when {
+                pages == null -> Box(Modifier.fillMaxSize().padding(bottom = bottom))
+                pages.isEmpty() -> Box(
+                    Modifier.fillMaxSize().padding(bottom = bottom).padding(32.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        stringResource(R.string.no_pages),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
                     )
-                    HorizontalDivider()
+                }
+                else -> LazyColumn(
+                    // Room for the button, so it never covers the last page.
+                    contentPadding = PaddingValues(bottom = bottom + 88.dp),
+                ) {
+                    items(pages, key = { it.id }) { page ->
+                        ListItem(
+                            headlineContent = { Text(page.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            supportingContent = {
+                                Text(page.urls.joinToString("\n"), maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            },
+                            leadingContent = { PageIcon(page) },
+                            trailingContent = {
+                                PageMenu(
+                                    onEdit = { onEdit(page) },
+                                    onAddToHome = {
+                                        if (!onAddToHome(page)) {
+                                            scope.launch { snackbar.showSnackbar(context.getString(R.string.pin_unsupported)) }
+                                        }
+                                    },
+                                )
+                            },
+                            modifier = Modifier.clickable { onOpen(page) },
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }
@@ -204,7 +217,12 @@ private fun describe(context: Context, result: ImportResult.Invalid): String = w
 }
 
 @Composable
-private fun ListMenu(onExport: () -> Unit, onImport: () -> Unit) {
+private fun ListMenu(
+    onExport: () -> Unit,
+    onImport: () -> Unit,
+    runningVersion: String?,
+    onCheckUpdates: (() -> Unit)?,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }) {
@@ -219,6 +237,22 @@ private fun ListMenu(onExport: () -> Unit, onImport: () -> Unit) {
                 text = { Text(stringResource(R.string.import_config)) },
                 onClick = { expanded = false; onImport() },
             )
+            if (onCheckUpdates != null) {
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(stringResource(R.string.update_check))
+                            Text(
+                                stringResource(R.string.update_running_version, runningVersion.orEmpty()),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    onClick = { expanded = false; onCheckUpdates() },
+                )
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -19,8 +20,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import es.edgarms.weblauncher.shortcuts.Shortcuts
 import es.edgarms.weblauncher.ui.PagesViewModel
+import es.edgarms.weblauncher.ui.UpdateViewModel
 import es.edgarms.weblauncher.ui.edit.PageEditScreen
 import es.edgarms.weblauncher.ui.list.PageListScreen
+import es.edgarms.weblauncher.ui.list.UpdateControls
 import es.edgarms.weblauncher.ui.theme.WebLauncherTheme
 import es.edgarms.weblauncher.web.WebActivity
 import kotlinx.serialization.Serializable
@@ -44,13 +47,19 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun LauncherNavHost(viewModel: PagesViewModel = viewModel()) {
+private fun LauncherNavHost(viewModel: PagesViewModel = viewModel(), updates: UpdateViewModel = viewModel()) {
     val nav = rememberNavController()
     val context = LocalContext.current
     val config by viewModel.config.collectAsStateWithLifecycle()
+    val updateState by updates.state.collectAsStateWithLifecycle()
 
     NavHost(nav, startDestination = PageListRoute) {
         composable<PageListRoute> {
+            // The hourly job is the main check; this one covers a phone that postponed it.
+            LifecycleResumeEffect(Unit) {
+                updates.checkIfDue()
+                onPauseOrDispose {}
+            }
             PageListScreen(
                 pages = config?.pages,
                 onAdd = { nav.navigate(PageEditRoute()) },
@@ -60,6 +69,17 @@ private fun LauncherNavHost(viewModel: PagesViewModel = viewModel()) {
                 onExport = viewModel::exportTo,
                 onReadImport = viewModel::readImport,
                 onApplyImport = viewModel::applyImport,
+                updates = if (updates.enabled) {
+                    UpdateControls(
+                        state = updateState,
+                        runningVersion = updates.runningVersion,
+                        onCheck = updates::checkNow,
+                        canInstall = updates::canInstall,
+                        onInstall = updates::install,
+                    )
+                } else {
+                    null
+                },
             )
         }
         composable<PageEditRoute> { entry ->

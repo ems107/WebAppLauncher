@@ -90,8 +90,8 @@ class UpdateRepository(private val app: WebLauncherApp) {
     /** Downloads the update on offer and hands it to Android, which asks the user to confirm. */
     fun install() {
         val update = _state.value.available ?: return
-        val busy = _state.value.install.let { it is InstallProgress.Downloading || it is InstallProgress.Confirming }
-        if (busy) return
+        // Confirming is not busy: a confirmation dismissed without an answer must not leave the banner stuck.
+        if (_state.value.install is InstallProgress.Downloading) return
         setInstall(InstallProgress.Downloading(0f))
         scope.launch {
             val apk = try {
