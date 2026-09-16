@@ -77,16 +77,26 @@ class PullToRefreshLayout(context: Context, private val webView: WebView) : Swip
     private companion object {
         const val BRIDGE = "WebLauncherPull"
 
-        /** Anything scrolled down under the finger, or the document itself, means a pull would scroll instead. */
+        /**
+         * A drag down pulls only if nothing under the finger would take it instead: an element
+         * scrolled down (or the document itself), or one whose `touch-action` keeps vertical
+         * drags for the page's own script -- a bottom sheet's handle, say. Chrome does not
+         * refresh over either.
+         */
         val SCRIPT = """
             (() => {
               if (window.__webLauncherPull) return;
               window.__webLauncherPull = true;
+              const pansDown = element => {
+                const action = getComputedStyle(element).touchAction;
+                return action === 'auto' || action === 'manipulation' || /pan-(y|down)/.test(action);
+              };
               addEventListener('touchstart', event => {
                 if (event.touches.length !== 1) return;
-                const scrolled = window.scrollY > 0 ||
-                  event.composedPath().some(node => node instanceof Element && node.scrollTop > 0);
-                $BRIDGE.touchStarted(!scrolled);
+                const elements = event.composedPath().filter(node => node instanceof Element);
+                const taken = window.scrollY > 0 ||
+                  elements.some(element => element.scrollTop > 0 || !pansDown(element));
+                $BRIDGE.touchStarted(!taken);
               }, { capture: true, passive: true });
             })();
         """.trimIndent()

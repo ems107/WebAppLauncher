@@ -201,7 +201,10 @@ updater and stay published.
   that scroll an element of their own (ItsMyMoney's shell is `100dvh`) leave
   it at 0, so a pull-to-refresh keyed on it reloads on every drag upwards.
   `PullToRefreshLayout` asks the page instead: a script answers on every
-  `touchstart` whether anything under the finger is scrolled. Driving the
+  `touchstart` whether anything under the finger is scrolled, or has a
+  `touch-action` that keeps vertical drags for the page's own script (the
+  handle of ItsMyMoney's bottom sheets is `touch-action: none`, and dragging it
+  down used to refresh instead of shrinking the sheet). Driving the
   spinner from Chromium's overscroll reports was tried and shipped in 1.0.1: they
   arrive late and in chunks, so the spinner jumped into place and could not be
   pushed back. Keep the gesture native.
