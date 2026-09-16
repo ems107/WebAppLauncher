@@ -7,6 +7,8 @@ import es.edgarms.weblauncher.data.PagesRepository
 import es.edgarms.weblauncher.icons.IconFetcher
 import es.edgarms.weblauncher.net.OkHttpUrlProber
 import es.edgarms.weblauncher.net.UrlProber
+import es.edgarms.weblauncher.update.UpdateCheckWorker
+import es.edgarms.weblauncher.update.UpdateRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,10 +21,16 @@ class WebLauncherApp : Application() {
     val pages by lazy { PagesRepository(this) }
     val prober: UrlProber by lazy { OkHttpUrlProber() }
     val iconFetcher by lazy { IconFetcher() }
+    val updates by lazy { UpdateRepository(this) }
 
     /** Pages whose site was already asked for an icon since the app started: once is enough. */
     val iconAttempts: MutableSet<String> = Collections.synchronizedSet(HashSet())
 
     /** For work that must outlive the screen that started it, like an icon download. */
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    override fun onCreate() {
+        super.onCreate()
+        if (updates.enabled) UpdateCheckWorker.schedule(this)
+    }
 }

@@ -34,6 +34,30 @@
     <string name="import_newer">That file comes from a newer version of the app</string>
     <string name="import_bad_page">The page “%1$s” in the file is not valid</string>
 
+    <string name="update_check">Check for updates</string>
+    <string name="update_running_version">Version %1$s installed</string>
+    <string name="update_up_to_date">You have the latest version (%1$s)</string>
+    <string name="update_offline">Could not reach GitHub</string>
+    <string name="update_rate_limited">GitHub is limiting requests; try again later</string>
+    <string name="update_server_error">GitHub answered with an error</string>
+    <string name="update_available">Version %1$s available</string>
+    <string name="update_see_notes">Tap to see what is new</string>
+    <string name="update_action">Update</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_confirming">Confirm the installation</string>
+    <string name="update_failed_download">The download failed</string>
+    <string name="update_failed_not_this">The downloaded file is not this update</string>
+    <string name="update_failed_signature">Signed with another key: uninstall this copy first</string>
+    <string name="update_failed_cancelled">Installation cancelled</string>
+    <string name="update_failed_other">Installation failed: %1$s</string>
+    <string name="update_notes_title">Version %1$s</string>
+    <string name="update_no_notes">This version has no notes.</string>
+    <string name="update_install">Install</string>
+    <string name="update_later">Later</string>
+    <string name="update_permission_title">Allow installing updates</string>
+    <string name="update_permission_message">Android needs permission for this app to install apps. Turn on “Allow from this source”, then come back.</string>
+    <string name="update_permission_open">Open settings</string>
+
     <string name="new_page">New page</string>
     <string name="edit_page">Edit page</string>
     <string name="back">Back</string>

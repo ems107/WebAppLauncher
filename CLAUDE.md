@@ -10,6 +10,13 @@ The README describes what it does. Checked on the real phone except for three
 things only Edgar's setup can show: a Jackery session surviving an exit, a
 cable-to-Wi-Fi switch of the PC, and pinned shortcuts after a reboot.
 
+**It updates itself** from the public GitHub releases of `ems107/WebAppLauncher`,
+cut with `scripts/release.ps1`. Checked on the phone: 0.0.1 to 0.0.2 through the
+forced check, the install permission and a cancelled then retried confirmation;
+0.0.3 found without asking, once the last check was over 50 minutes old. The
+hourly job was seen running on its own schedule, but that time the list's resume
+check had got there first, so a find made by the job alone is still unseen.
+
 ## Why this exists
 
 Edgar runs personal web apps on his own PC and reaches them from his phone over
@@ -57,6 +64,18 @@ asked. This is a core feature, not a nicety: it is what makes switching between
 cable and Wi-Fi invisible. The address that answered last is tried alone first;
 only when it fails do the others race.
 
+**Updates come from public GitHub releases, and the user always confirms.** The
+repository is public so the app can read the release list and download the APK
+with no token inside it. The app never installs on its own: Android's own
+confirmation is the last step, and nothing about an update appears anywhere but
+the page list -- never inside an open page, never as a notification.
+
+**Releases are signed with a key of their own, kept outside the repository**
+(`%USERPROFILE%\.android\weblauncher-release.jks`, described by
+`weblauncher-release.properties` beside it). Losing it means no installed copy
+accepts another update. Debug builds are signed with the debug key, so neither
+kind installs over the other, and debug builds do not look for updates.
+
 ## How the pieces fit
 
 - `data/PagesRepository` is **the one copy of the pages** while the app runs,
@@ -70,6 +89,30 @@ only when it fails do the others race.
   tested; `IconFetcher` downloads. A page's icon is fetched the first time it
   opens, which is when its server is known to answer.
 - `web/WebActivity` runs each page as its own document task.
+- `update/UpdateRepository` is **the one copy of the update state**, like the
+  pages. The hourly `UpdateCheckWorker`, the list's resume check and the menu's
+  forced check all go through `UpdateChecker`, which is JVM tested with
+  `MockWebServer`: at most one request in 50 minutes unless forced, an ETag so
+  unchanged answers cost nothing against GitHub's 60/h, and nothing learnt by an
+  older version of the app is trusted after updating. `ReleaseFeed` decides from
+  the JSON, `ApkDownloader` resumes with `Range`; only installing (a
+  `PackageInstaller` session reported to `InstallResultReceiver`) needs Android.
+
+## Releases
+
+**Never cut a release unless Edgar asks for one in that turn.** Every installed
+copy offers it within the hour.
+
+`.\scripts\release.ps1 -Version X.Y.Z -NotesFile <file>` (or `-Notes "..."`) from a
+clean `main`; `-DryRun` builds and verifies without committing or publishing, and
+`-AllowBranch` exists only for trying the updater from a branch. The version
+lives only in `weblauncher.version` in `gradle.properties` (the version code is
+derived from it, so each part must be 0-99), and only the script changes it.
+The annotated tag's message is the release notes, and the app shows them before
+installing, so write them for Edgar to read on the phone.
+
+The test releases 0.0.1 to 0.0.3 were published on purpose while building the
+updater and stay published.
 
 ## Environment on this machine
 
@@ -95,13 +138,24 @@ only when it fails do the others race.
   is stuck at 74 and disabled -- so modern JavaScript works. If pages ever break
   on syntax, check `adb shell dumpsys webviewupdate` before blaming the page.
   A cold start takes about four seconds: wait before taking a screenshot.
+  It now runs a **release build**, which is what receives updates: installing a
+  debug build over it needs an uninstall first (export the configuration, push
+  the file to `/sdcard/Download`, import it afterwards; pinned shortcuts must be
+  pinned again).
+- **Unlocking it from adb** only works in one breath: `input keyevent
+  KEYCODE_WAKEUP`, a swipe up, then `input text <PIN>` and `KEYCODE_ENTER` in the
+  same command. Split across calls, the screen dozes off in between and every
+  screenshot comes back black.
 - **Driving the UI from adb**: `uiautomator dump` fails ("null root node") on
   Compose screens with a focused text field or a dialog, so read tap
   coordinates off a screenshot instead -- screenshot pixels are screen pixels.
   `adb shell run-as es.edgarms.weblauncher cat files/config.json` shows what was
   actually saved (debug builds only), and `adb shell dumpsys shortcut` what the
-  launcher was given. In PowerShell, do not name a helper `sc`: it is the alias
-  of `Set-Content` and wins.
+  launcher was given. `adb shell dumpsys jobscheduler` shows the hourly update
+  job (`androidx.work...SystemJobService`) and when it last ran. In PowerShell,
+  do not name a helper `sc`: it is the alias of `Set-Content` and wins. From Git
+  Bash, set `MSYS_NO_PATHCONV=1` before `adb push`/`install`, or a device path
+  like `/sdcard/Download` is rewritten into a Windows one.
 
 ## Conventions
 
@@ -149,3 +203,17 @@ only when it fails do the others race.
 - Android cannot draw SVG icons without a library; skip them when looking for a
   site's icon. The Jackery serves its manifest and icons without the PIN, but
   `/favicon.ico` answers 401.
+- **Play Protect steps into every update** with an APK it has not seen: after
+  Android's own "Install", it takes about ten seconds and then offers "Scan app"
+  or "Don't install app"; "Install without scanning" hides under "More details"
+  and asks for the device credential. On the DT50 that path ended in `REJECT`
+  both times, even with the PIN entered, and reached the app as
+  `STATUS_FAILURE_ABORTED` -- the banner's "Installation cancelled". Retry then
+  installed straight away with no dialog (Play Protect answers `ALLOW` for an
+  APK it was already asked about). Nothing in the app can skip it; do not
+  mistake it for a bug in the installer.
+- A `PackageInstaller` session's result `PendingIntent` must be **mutable** on
+  Android 12+, since Android writes the status into it.
+- GitHub's API rejects requests without a `User-Agent`, and counts 60
+  unauthenticated requests an hour per public IP -- shared with anything else on
+  the same connection. Only a 304 is free, which is why the ETag matters.

@@ -32,6 +32,30 @@
     <string name="import_newer">Ese fichero es de una versión más nueva de la app</string>
     <string name="import_bad_page">La página «%1$s» del fichero no es válida</string>
 
+    <string name="update_check">Buscar actualizaciones</string>
+    <string name="update_running_version">Versión %1$s instalada</string>
+    <string name="update_up_to_date">Ya tienes la última versión (%1$s)</string>
+    <string name="update_offline">No se pudo conectar con GitHub</string>
+    <string name="update_rate_limited">GitHub está limitando las consultas; prueba más tarde</string>
+    <string name="update_server_error">GitHub respondió con un error</string>
+    <string name="update_available">Versión %1$s disponible</string>
+    <string name="update_see_notes">Toca para ver las novedades</string>
+    <string name="update_action">Actualizar</string>
+    <string name="update_downloading">Descargando…</string>
+    <string name="update_confirming">Confirma la instalación</string>
+    <string name="update_failed_download">La descarga falló</string>
+    <string name="update_failed_not_this">El fichero descargado no es esta actualización</string>
+    <string name="update_failed_signature">Firmada con otra clave: desinstala antes esta copia</string>
+    <string name="update_failed_cancelled">Instalación cancelada</string>
+    <string name="update_failed_other">La instalación falló: %1$s</string>
+    <string name="update_notes_title">Versión %1$s</string>
+    <string name="update_no_notes">Esta versión no tiene notas.</string>
+    <string name="update_install">Instalar</string>
+    <string name="update_later">Más tarde</string>
+    <string name="update_permission_title">Permitir instalar actualizaciones</string>
+    <string name="update_permission_message">Android necesita permiso para que esta app instale aplicaciones. Activa «Permitir de esta fuente» y vuelve.</string>
+    <string name="update_permission_open">Abrir ajustes</string>
+
     <string name="new_page">Nueva página</string>
     <string name="edit_page">Editar página</string>
     <string name="back">Atrás</string>
