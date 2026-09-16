@@ -149,6 +149,11 @@ updater and stay published.
   KEYCODE_WAKEUP`, a swipe up, then `input text <PIN>` and `KEYCODE_ENTER` in the
   same command. Split across calls, the screen dozes off in between and every
   screenshot comes back black.
+- **A gesture that changes direction** (pull, then push back) cannot be made
+  with `input swipe`. Write raw events to `/dev/input/event1` with `sendevent`
+  from a script pushed to `/data/local/tmp`: the touchscreen speaks multi-touch
+  protocol A, so every frame is tracking id, X, Y, pressure, then `0 2 0`
+  (`SYN_MT_REPORT`) and `0 0 0`, with `1 330 1`/`1 330 0` around the gesture.
 - **Driving the UI from adb**: `uiautomator dump` fails ("null root node") on
   Compose screens with a focused text field or a dialog, so read tap
   coordinates off a screenshot instead -- screenshot pixels are screen pixels.
@@ -195,8 +200,11 @@ updater and stay published.
 - **A WebView's `scrollY` does not say whether a page is at the top.** Pages
   that scroll an element of their own (ItsMyMoney's shell is `100dvh`) leave
   it at 0, so a pull-to-refresh keyed on it reloads on every drag upwards.
-  `PageWebView` pulls only with what Chromium reports as overscroll, and only
-  when the drag's first move already overscrolled -- as Chrome does.
+  `PullToRefreshLayout` asks the page instead: a script answers on every
+  `touchstart` whether anything under the finger is scrolled. Driving the
+  spinner from Chromium's overscroll reports was tried and shipped in 1.0.1: they
+  arrive late and in chunks, so the spinner jumped into place and could not be
+  pushed back. Keep the gesture native.
 - **`prefers-color-scheme` comes from the app's theme**, not the system, for
   apps targeting 33+: the WebView reads `isLightTheme`. A theme that is always
   `Light` keeps every page light. Before Android 10 the platform has no such

@@ -23,7 +23,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import es.edgarms.weblauncher.BuildConfig
 import es.edgarms.weblauncher.icons.PageIcons
 import es.edgarms.weblauncher.model.Page
@@ -36,8 +35,8 @@ import kotlinx.coroutines.launch
  */
 class WebActivity : ComponentActivity() {
     private val viewModel: PageViewModel by viewModels()
-    private lateinit var webView: PageWebView
-    private lateinit var refresher: SwipeRefreshLayout
+    private lateinit var webView: WebView
+    private lateinit var refresher: PullToRefreshLayout
 
     private var loadedId = 0
     private var loadedUrl: String? = null
@@ -56,12 +55,9 @@ class WebActivity : ComponentActivity() {
         // Without cookies the session is gone on every exit; for the Jackery that is its PIN.
         CookieManager.getInstance().setAcceptCookie(true)
         webView = createWebView()
-        refresher = SwipeRefreshLayout(this).apply {
-            addView(webView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        // Pulling down refreshes only from the top of the page, which only the page knows.
+        refresher = PullToRefreshLayout(this, webView).apply {
             setOnRefreshListener { webView.reload() }
-            // Pulling down refreshes only when the page itself cannot scroll up any further,
-            // which only the page knows: see PageWebView.
-            setOnChildScrollUpCallback { _, _ -> !webView.handingOverPull }
         }
         onBackPressedDispatcher.addCallback(this, historyBack)
 
@@ -109,7 +105,7 @@ class WebActivity : ComponentActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun createWebView(): PageWebView = PageWebView(this).apply {
+    private fun createWebView(): WebView = WebView(this).apply {
         settings.javaScriptEnabled = true
         // Off by default: the page loads, looks fine, and silently loses all its state.
         settings.domStorageEnabled = true
@@ -126,7 +122,13 @@ class WebActivity : ComponentActivity() {
                 historyBack.isEnabled = view.canGoBack()
             }
 
+            override fun onPageCommitVisible(view: WebView, url: String?) {
+                refresher.watchPage()
+            }
+
             override fun onPageFinished(view: WebView, url: String?) {
+                // Again, in case the page was not visible before it finished.
+                refresher.watchPage()
                 refresher.isRefreshing = false
                 if (clearHistoryWhenLoaded) {
                     clearHistoryWhenLoaded = false
