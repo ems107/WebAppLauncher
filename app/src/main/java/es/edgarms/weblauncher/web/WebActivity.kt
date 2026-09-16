@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
  */
 class WebActivity : ComponentActivity() {
     private val viewModel: PageViewModel by viewModels()
-    private lateinit var webView: WebView
+    private lateinit var webView: OverscrollWebView
     private lateinit var refresher: PullToRefreshLayout
 
     private var loadedId = 0
@@ -105,7 +105,7 @@ class WebActivity : ComponentActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun createWebView(): WebView = WebView(this).apply {
+    private fun createWebView(): OverscrollWebView = OverscrollWebView(this).apply {
         settings.javaScriptEnabled = true
         // Off by default: the page loads, looks fine, and silently loses all its state.
         settings.domStorageEnabled = true
@@ -122,13 +122,7 @@ class WebActivity : ComponentActivity() {
                 historyBack.isEnabled = view.canGoBack()
             }
 
-            override fun onPageCommitVisible(view: WebView, url: String?) {
-                refresher.watchPage()
-            }
-
             override fun onPageFinished(view: WebView, url: String?) {
-                // Again, in case the page was not visible before it finished.
-                refresher.watchPage()
                 refresher.isRefreshing = false
                 if (clearHistoryWhenLoaded) {
                     clearHistoryWhenLoaded = false

@@ -197,17 +197,20 @@ updater and stay published.
 - Cookies need `CookieManager.setAcceptCookie(true)` and a `flush()` when the
   activity pauses, or the session is gone on every exit -- which for the Jackery
   app means retyping the PIN constantly.
-- **A WebView's `scrollY` does not say whether a page is at the top.** Pages
-  that scroll an element of their own (ItsMyMoney's shell is `100dvh`) leave
-  it at 0, so a pull-to-refresh keyed on it reloads on every drag upwards.
-  `PullToRefreshLayout` asks the page instead: a script answers on every
-  `touchstart` whether anything under the finger is scrolled, or has a
-  `touch-action` that keeps vertical drags for the page's own script (the
-  handle of ItsMyMoney's bottom sheets is `touch-action: none`, and dragging it
-  down used to refresh instead of shrinking the sheet). Driving the
-  spinner from Chromium's overscroll reports was tried and shipped in 1.0.1: they
-  arrive late and in chunks, so the spinner jumped into place and could not be
-  pushed back. Keep the gesture native.
+- **Pull-to-refresh is decided by Chromium, and drawn by the app.** A WebView's
+  `scrollY` cannot say whether a page is at the top (ItsMyMoney scrolls an
+  element of its own and leaves it at 0), and guessing from outside what a drag
+  would do -- scrolled elements, `touch-action`, `preventDefault`, iframes --
+  needs a new rule for every page. So `PullToRefreshLayout` lets the page have
+  the drag and listens for `overScrollBy` going past the top: if it comes right
+  as the drag begins (150 ms), nothing on the page used it, and the layout takes
+  the gesture from there. Two ways that were tried and must not come back:
+  moving the spinner with the overscroll reports themselves (1.0.1: they arrive
+  late and in chunks, the spinner jumps and cannot be pushed back), and a
+  `touchstart` script guessing per case (1.0.2). The consequence, accepted
+  knowingly: a page that sets `overscroll-behavior` to `contain` or `none`
+  opts out of pull-to-refresh here exactly as it does in Chrome -- ItsMyMoney's
+  list does both.
 - **`prefers-color-scheme` comes from the app's theme**, not the system, for
   apps targeting 33+: the WebView reads `isLightTheme`. A theme that is always
   `Light` keeps every page light. Before Android 10 the platform has no such
