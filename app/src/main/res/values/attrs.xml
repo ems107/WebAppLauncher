@@ -1,0 +1,7 @@
+<resources>
+    <!--
+        What a WebView reads before Android 10, where the platform has no isLightTheme:
+        an attribute of that name in the app's own package, as AppCompat declares it.
+    -->
+    <attr name="isLightTheme" format="boolean" />
+</resources>

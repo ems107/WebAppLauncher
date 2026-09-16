@@ -22,7 +22,8 @@ window itself.
 - **Full screen, with state kept.** JavaScript, DOM storage and cookies are on,
   so a site's login survives closing the app. Links to other sites open in the
   browser; back walks the page's history and then leaves; pulling down from the
-  top reloads.
+  top reloads. A page that follows `prefers-color-scheme` goes light or dark
+  with the phone.
 - **Home-screen shortcuts.** A page's menu pins it to the home screen, and the
   launcher icon's long-press menu lists the pages. Each page runs as its own
   task, with its name and icon in recents.

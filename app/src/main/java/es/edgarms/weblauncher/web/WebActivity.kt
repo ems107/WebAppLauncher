@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
  */
 class WebActivity : ComponentActivity() {
     private val viewModel: PageViewModel by viewModels()
-    private lateinit var webView: WebView
+    private lateinit var webView: PageWebView
     private lateinit var refresher: SwipeRefreshLayout
 
     private var loadedId = 0
@@ -59,8 +59,9 @@ class WebActivity : ComponentActivity() {
         refresher = SwipeRefreshLayout(this).apply {
             addView(webView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
             setOnRefreshListener { webView.reload() }
-            // Pulling down refreshes only from the top of the page; anywhere else it scrolls.
-            setOnChildScrollUpCallback { _, _ -> webView.scrollY > 0 }
+            // Pulling down refreshes only when the page itself cannot scroll up any further,
+            // which only the page knows: see PageWebView.
+            setOnChildScrollUpCallback { _, _ -> !webView.handingOverPull }
         }
         onBackPressedDispatcher.addCallback(this, historyBack)
 
@@ -108,7 +109,7 @@ class WebActivity : ComponentActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun createWebView(): WebView = WebView(this).apply {
+    private fun createWebView(): PageWebView = PageWebView(this).apply {
         settings.javaScriptEnabled = true
         // Off by default: the page loads, looks fine, and silently loses all its state.
         settings.domStorageEnabled = true

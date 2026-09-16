@@ -1,0 +1,7 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- The system is dark: so is the window, and every page is told prefers-color-scheme: dark. -->
+    <style name="Theme.WebLauncher" parent="android:Theme.Material.NoActionBar">
+        <item name="android:isLightTheme" tools:targetApi="29">false</item>
+        <item name="isLightTheme">false</item>
+    </style>
+</resources>

@@ -142,6 +142,9 @@ updater and stay published.
   debug build over it needs an uninstall first (export the configuration, push
   the file to `/sdcard/Download`, import it afterwards; pinned shortcuts must be
   pinned again).
+- **Dark theme can be tried on it** even though its settings offer none:
+  `adb shell cmd uimode night yes` (and `no` afterwards) switches the app and
+  its pages, which is enough to check what a page is told.
 - **Unlocking it from adb** only works in one breath: `input keyevent
   KEYCODE_WAKEUP`, a swipe up, then `input text <PIN>` and `KEYCODE_ENTER` in the
   same command. Split across calls, the screen dozes off in between and every
@@ -189,6 +192,16 @@ updater and stay published.
 - Cookies need `CookieManager.setAcceptCookie(true)` and a `flush()` when the
   activity pauses, or the session is gone on every exit -- which for the Jackery
   app means retyping the PIN constantly.
+- **A WebView's `scrollY` does not say whether a page is at the top.** Pages
+  that scroll an element of their own (ItsMyMoney's shell is `100dvh`) leave
+  it at 0, so a pull-to-refresh keyed on it reloads on every drag upwards.
+  `PageWebView` pulls only with what Chromium reports as overscroll, and only
+  when the drag's first move already overscrolled -- as Chrome does.
+- **`prefers-color-scheme` comes from the app's theme**, not the system, for
+  apps targeting 33+: the WebView reads `isLightTheme`. A theme that is always
+  `Light` keeps every page light. Before Android 10 the platform has no such
+  attribute, and the WebView looks for one named `isLightTheme` in the app's
+  own package instead -- hence `values/attrs.xml`.
 - Not every launcher supports pinning shortcuts. Check
   `isRequestPinShortcutSupported` and say so rather than failing silently.
 - With `documentLaunchMode="intoExisting"`, intents that differ only in extras

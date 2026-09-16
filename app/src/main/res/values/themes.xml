@@ -1,4 +1,11 @@
-<resources>
-    <!-- Compose draws everything; the platform theme only covers the window before it does. -->
-    <style name="Theme.WebLauncher" parent="android:Theme.Material.Light.NoActionBar" />
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        Compose draws everything; the platform theme only covers the window before it does.
+        It also decides what an open page is told: a WebView answers prefers-color-scheme
+        from isLightTheme, so the dark variant in values-night is what makes pages go dark.
+    -->
+    <style name="Theme.WebLauncher" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:isLightTheme" tools:targetApi="29">true</item>
+        <item name="isLightTheme">true</item>
+    </style>
 </resources>
