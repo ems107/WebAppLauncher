@@ -33,6 +33,14 @@ window itself.
   picked image.
 - **Export and import.** The list's menu saves the configuration to a JSON file
   and loads it back. Icons are not included; they are fetched again.
+- **Updates itself from GitHub.** Once an hour, and when the page list is opened
+  after more than that, the app looks for a newer
+  [release](https://github.com/ems107/WebAppLauncher/releases). A card at the
+  top of the list says so until it is installed: tapping it shows the release
+  notes, downloads the APK and hands it to Android, which asks for confirmation.
+  The first time, Android also asks to allow this app to install apps. "Check
+  for updates" in the list's menu asks right away. An open page never shows any
+  of it, and debug builds do not look for updates at all.
 
 ## Limitations
 
@@ -54,7 +62,15 @@ Requirements: JDK 17 or newer and the Android SDK with platform 37.2 (installing
 
 ## Installing on a phone
 
-With wireless debugging (or `adb tcpip 5555` once over USB):
+The simplest way is the APK of the latest
+[release](https://github.com/ems107/WebAppLauncher/releases); from then on the
+app offers every new one.
+
+Play Protect may step in after Android's "Install" to recommend scanning a
+version it has not seen. If the card then says "Installation cancelled", Retry:
+the second attempt installs without asking again.
+
+For development, with wireless debugging (or `adb tcpip 5555` once over USB):
 
 ```
 adb connect <phone-ip>:5555
@@ -64,6 +80,26 @@ adb devices                    # must say "device", not "unauthorized"
 
 The first connection shows a prompt on the phone to allow debugging from this
 computer.
+
+A debug build is signed with a different key from the releases, so Android will
+not install one over the other: uninstall first, after exporting the
+configuration.
+
+## Publishing a release
+
+```
+.\scripts\release.ps1 -Version X.Y.Z -NotesFile notes.md    # or -Notes "..."; -DryRun to only build
+```
+
+The script checks the repository is clean and on `main`, writes the version to
+`gradle.properties`, runs the tests, builds the release APK, verifies it carries
+the release key, commits, tags (the tag message is the release notes, which the
+app shows before installing), pushes and publishes the GitHub release with `gh`.
+
+Releases are signed with the key in `%USERPROFILE%\.android\weblauncher-release.jks`,
+described by `weblauncher-release.properties` next to it. **Keep a copy of both
+somewhere safe**: an update signed with any other key is refused by every phone
+that has the app, and the only way back is uninstalling it.
 
 ## Configuration file
 

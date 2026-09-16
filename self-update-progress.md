@@ -164,7 +164,7 @@ PowerShell 5.1 y solo ASCII.
 
 **En la JVM**: `gradlew test` en verde, incluidos los tests nuevos.
 
-**En el DT50** (`adb connect 172.30.172.210:5555`, PIN 1975 si está bloqueado; capturas en el scratchpad):
+**En el DT50** (dirección y PIN los da Edgar, nunca en el repo; capturas en el scratchpad):
 
 1. **Guardar tu configuración antes de desinstalar**: `run-as ... cat files/config.json` (la build actual es debug). El fichero va a `/sdcard/Download` para importarlo después desde la app.
 2. **Publicar la 0.0.1**: `release.ps1 -Version 0.0.1 -AllowBranch`. Desinstalar la debug, `adb install` del APK de la release, importar la configuración y comprobar que las páginas y los accesos directos funcionan.
@@ -189,5 +189,11 @@ PowerShell 5.1 y solo ASCII.
 - [x] 3 y 4 (un solo commit, porque `UpdateRepository` ya incluye la instalación). `GitHubReleaseSource` (ETag, User-Agent, límite de cuota), `UpdateStore` (`update.json`), `UpdateChecker` (lógica de «reciente» a 50 min, olvida lo aprendido por otra versión), `UpdateCheckWorker` (1 h, con red), `ApkDownloader` (reanuda con `Range`, 5 intentos, límite por silencio), `UpdateRepository` (estado, verificación del APK con `getPackageArchiveInfo`, sesión de `PackageInstaller`), `InstallResultReceiver`, permiso en el manifiesto. Tests en verde en la JVM; aún sin probar en el móvil.
 - [x] 5. `UpdateBanner` (tarjeta arriba de la lista, notas en diálogo, permiso de orígenes desconocidos con vuelta automática), entrada «Buscar actualizaciones» con la versión instalada en el menú ⋮ (oculta en debug), `UpdateViewModel`, comprobación al volver a la lista si toca, textos en/es. Compila en debug y release; sin probar aún en el móvil.
 - [x] 6. `scripts/release.ps1`: comprobaciones (rama, árbol limpio, tag nuevo y mayor que el último, `gh`, clave), `gradlew test assembleRelease`, verificación de que el APK lleva la huella SHA-256 del keystore, commit `Release vX`, tag anotado con las notas, push y `gh release create`. `-DryRun` probado: construye, verifica y deja `gradle.properties` como estaba.
-- [ ] 7. Documentación.
-- [ ] Pruebas en el DT50 (0.0.1 → 0.0.2 → 0.0.3).
+- [x] 7. Documentación: README (actualizaciones, instalar desde la release, Play Protect, publicar una release, guardar la clave) y CLAUDE.md (decisiones, piezas, sección Releases con «nunca sin que Edgar lo pida», desbloqueo por adb, `MSYS_NO_PATHCONV`, trampas de Play Protect / PendingIntent / API de GitHub).
+- [x] Pruebas en el DT50:
+  - Configuración guardada, build debug desinstalada, 0.0.1 instalada y configuración importada; acceso directo de Jackery fijado de nuevo.
+  - «Buscar actualizaciones» sin novedades → «You have the latest version (0.0.1)».
+  - 0.0.2 publicada → búsqueda forzada → tarjeta y snackbar → notas → Instalar → diálogo de permiso → ajustes → al volver empieza la descarga sola → confirmación del sistema → CANCEL deja «Installation cancelled» + Retry → Retry → Play Protect → instalada. Configuración y acceso directo intactos, la tarjeta desaparece, menú dice 0.0.2.
+  - 0.0.3 publicada → dentro de los 50 min la lista no la muestra → pasada la ventana la tarjeta aparece sin buscar a mano (la encontró la comprobación al volver a la lista; el trabajo horario corrió solo a su hora con SUCCESS pero ya no le tocaba preguntar) → con la página abierta no aparece nada → instalada al segundo intento por Play Protect. Menú dice 0.0.3.
+  - Sin probar en el móvil: búsqueda sin red (el adb va por Wi-Fi; cubierto en la JVM), 304 en logcat (la app no registra peticiones; cubierto en la JVM), y que el trabajo horario encuentre algo por sí solo.
+- Pendiente de decidir: Play Protect rechaza el primer intento de cada versión nueva en el DT50; el segundo instala.
