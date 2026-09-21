@@ -4,9 +4,22 @@
 
 - [x] Plan escrito (este fichero).
 - [x] `Viewport.kt` + test: ancho/escala en función pura, con test JVM (pasa).
-- [ ] Cabecera y pestaña; WebView sin pull-to-refresh.
-- [ ] Limpieza de dependencia y docs.
-- [ ] Verificación en el DT50.
+- [x] Cabecera y pestaña; WebView sin pull-to-refresh; fuera `swiperefreshlayout`.
+- [x] Docs: `CLAUDE.md` (cabecera, por qué no hay pull-to-refresh, la trampa del
+      viewport fijado al cargar) y README.
+- [x] Verificado en el DT50 (build debug), con ItsMyMoney y Jackery: abre con la
+      cabecera oculta; la pestaña abre con un toque y se arrastra sin salirse;
+      zoom y escritorio re-maquetan sin recargar; recargar recarga (un campo
+      escrito se vacía); arrastrar hacia abajo no hace nada; pellizco táctil real;
+      `+` tras pellizcar devuelve la escala; rotar conserva todo y reajusta el
+      ancho; tema oscuro; icono de la web en la cabecera.
+- [ ] Pendiente: que Edgar lo pruebe.
+
+**Hallazgo durante la verificación:** con el zoom distinto de 100 %, tras una
+recarga o una navegación el pellizco quedaba muerto hasta cerrar la página.
+Causa: el script fijaba la escala (mín = máx) en `onPageFinished`, y Chromium
+se queda con esos límites. Arreglado: al cargar se aplica el viewport ya
+liberado, sin fijar; el fijado solo se usa al tocar la cabecera o al rotar.
 
 ---
 
