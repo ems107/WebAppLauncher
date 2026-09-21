@@ -4,14 +4,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -37,20 +39,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import es.edgarms.weblauncher.R
+import es.edgarms.weblauncher.model.Page
 import es.edgarms.weblauncher.net.Attempt
 import es.edgarms.weblauncher.net.FailureKind
 import es.edgarms.weblauncher.net.ProbeResult
 
 /**
  * The page itself, once there is something to show, with whatever is going on
- * laid over it: looking for a server, or explaining why none answered.
+ * laid over it: looking for a server, or explaining why none answered. While the
+ * page is showing, the header or its tab sits above it.
  *
- * @param pageView the WebView, inside its pull-to-refresh.
+ * @param pageView the WebView.
+ * @param page the page as it is now, so an icon fetched on this very opening shows in the header.
  */
 @Composable
 fun PageScreen(
     state: PageState,
+    page: Page?,
     pageView: View,
+    chrome: PageChrome,
+    onReload: () -> Unit,
     onRetry: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -58,28 +66,48 @@ fun PageScreen(
     LaunchedEffect(state) {
         if (state is PageState.Ready) pageShown = true
     }
+    // Looking for a server, or saying none answered, has buttons of its own.
+    val barPage = page.takeIf { state is PageState.Ready }
+    val barShown = barPage != null && !chrome.barHidden
 
-    Box(
+    Column(
         Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing),
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        if (pageShown) {
-            AndroidView(
-                factory = {
-                    (pageView.parent as? ViewGroup)?.removeView(pageView)
-                    pageView
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
+        if (barShown) PageBar(barPage!!, chrome, onReload)
+        // The page keeps clear of the gesture bar, a cutout and the keyboard, and
+        // of the status bar too when there is no header painting under it.
+        val sides = if (barShown) {
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+        } else {
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Vertical
         }
-        when (state) {
-            PageState.Loading -> Overlay {}
-            is PageState.Probing -> Overlay { Probing(state.page.name) }
-            is PageState.Unreachable -> Overlay { Unreachable(state, onRetry, onClose) }
-            PageState.Missing -> Overlay { Missing(onClose) }
-            is PageState.Ready -> Unit
+        BoxWithConstraints(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(sides)),
+        ) {
+            if (pageShown) {
+                AndroidView(
+                    factory = {
+                        (pageView.parent as? ViewGroup)?.removeView(pageView)
+                        pageView
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            when (state) {
+                PageState.Loading -> Overlay {}
+                is PageState.Probing -> Overlay { Probing(state.page.name) }
+                is PageState.Unreachable -> Overlay { Unreachable(state, onRetry, onClose) }
+                PageState.Missing -> Overlay { Missing(onClose) }
+                is PageState.Ready -> Unit
+            }
+            if (barPage != null && chrome.barHidden) {
+                ShowBarTab(chrome, maxOffset = constraints.maxWidth / 2f)
+            }
         }
     }
 }

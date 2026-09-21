@@ -1,6 +1,7 @@
 package es.edgarms.weblauncher.web
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -36,8 +37,15 @@ class ViewportTest {
 
     @Test
     fun `the script pins the scale and then frees the pinch`() {
-        val script = Viewport.script(450, desktop = false, zoom = 200)
+        val script = Viewport.script(450, desktop = false, zoom = 200, pin = true)
         assertTrue(script.contains("width=225, initial-scale=2.0, minimum-scale=2.0, maximum-scale=2.0"))
+        assertTrue(script.contains("minimum-scale=${Viewport.PINCH_MIN}, maximum-scale=${Viewport.PINCH_MAX}"))
+    }
+
+    @Test
+    fun `after a load the scale is never pinned`() {
+        val script = Viewport.script(450, desktop = false, zoom = 110, pin = false)
+        assertFalse(script.contains("minimum-scale=${Viewport.layoutFor(450, false, 110).scale}"))
         assertTrue(script.contains("minimum-scale=${Viewport.PINCH_MIN}, maximum-scale=${Viewport.PINCH_MAX}"))
     }
 }

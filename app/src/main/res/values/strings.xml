@@ -92,4 +92,12 @@
     <string name="retry">Retry</string>
     <string name="close">Close</string>
     <string name="page_missing">This page no longer exists in the launcher.</string>
+
+    <string name="desktop_on">Desktop layout, on</string>
+    <string name="desktop_off">Desktop layout, off</string>
+    <string name="zoom_in">Zoom in</string>
+    <string name="zoom_out">Zoom out</string>
+    <string name="reload">Reload</string>
+    <string name="hide_bar">Hide the header</string>
+    <string name="show_bar">Show the header</string>
 </resources>

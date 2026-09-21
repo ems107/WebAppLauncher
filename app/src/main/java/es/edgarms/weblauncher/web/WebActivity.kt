@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
@@ -19,15 +20,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import es.edgarms.weblauncher.BuildConfig
+import es.edgarms.weblauncher.WebLauncherApp
 import es.edgarms.weblauncher.icons.PageIcons
 import es.edgarms.weblauncher.model.Page
 import es.edgarms.weblauncher.ui.theme.WebLauncherTheme
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * One page, full screen, with no address bar. Each page runs as its own task,
@@ -35,8 +40,8 @@ import kotlinx.coroutines.launch
  */
 class WebActivity : ComponentActivity() {
     private val viewModel: PageViewModel by viewModels()
-    private lateinit var webView: OverscrollWebView
-    private lateinit var refresher: PullToRefreshLayout
+    private lateinit var webView: WebView
+    private val chrome = PageChrome()
 
     private var loadedId = 0
     private var loadedUrl: String? = null
@@ -55,10 +60,6 @@ class WebActivity : ComponentActivity() {
         // Without cookies the session is gone on every exit; for the Jackery that is its PIN.
         CookieManager.getInstance().setAcceptCookie(true)
         webView = createWebView()
-        // Pulling down refreshes only from the top of the page, which only the page knows.
-        refresher = PullToRefreshLayout(this, webView).apply {
-            setOnRefreshListener { webView.reload() }
-        }
         onBackPressedDispatcher.addCallback(this, historyBack)
 
         lifecycleScope.launch {
@@ -75,11 +76,26 @@ class WebActivity : ComponentActivity() {
                 }
             }
         }
+        // The header's zoom and desktop switch re-lay the page out at once, without
+        // reloading it. Not the starting value: that is onPageFinished's to apply.
+        lifecycleScope.launch {
+            snapshotFlow { chrome.desktop to chrome.zoom }.drop(1).collect { applyViewport(pin = true) }
+        }
 
         setContent {
             WebLauncherTheme {
                 val state by viewModel.state.collectAsStateWithLifecycle()
-                PageScreen(state, refresher, onRetry = viewModel::retry, onClose = ::finish)
+                val config by (application as WebLauncherApp).pages.config.collectAsStateWithLifecycle()
+                val page = state.page?.let { config?.page(it.id) ?: it }
+                PageScreen(
+                    state,
+                    page,
+                    webView,
+                    chrome,
+                    onReload = webView::reload,
+                    onRetry = viewModel::retry,
+                    onClose = ::finish,
+                )
             }
         }
     }
@@ -90,8 +106,7 @@ class WebActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        (refresher.parent as? ViewGroup)?.removeView(refresher)
-        refresher.removeView(webView)
+        (webView.parent as? ViewGroup)?.removeView(webView)
         webView.destroy()
         super.onDestroy()
     }
@@ -105,10 +120,34 @@ class WebActivity : ComponentActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun createWebView(): OverscrollWebView = OverscrollWebView(this).apply {
+    private fun createWebView(): WebView = WebView(this).apply {
+        // MATCH_PARENT, not the WRAP_CONTENT a bare view gets: a viewport with no
+        // defined height resolves every percentage height inside it to zero.
+        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         settings.javaScriptEnabled = true
         // Off by default: the page loads, looks fine, and silently loses all its state.
         settings.domStorageEnabled = true
+        // Only consulted when a page declares no viewport; the header's zoom writes one anyway.
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
+        // The pinch, the other half of the header's zoom: without the controls on,
+        // the scale range the viewport offers is never offered to anybody.
+        settings.setSupportZoom(true)
+        settings.builtInZoomControls = true
+        settings.displayZoomControls = false
+
+        // The layout width comes from the view, so rotating needs the viewport again.
+        // The first layout is not a rotation: it happens while the page is loading.
+        addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
+            val old = oldRight - oldLeft
+            if (old > 0 && right - left != old) applyViewport(pin = true)
+        }
+
+        webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView, newProgress: Int) {
+                chrome.progress = newProgress
+            }
+        }
 
         webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -123,7 +162,8 @@ class WebActivity : ComponentActivity() {
             }
 
             override fun onPageFinished(view: WebView, url: String?) {
-                refresher.isRefreshing = false
+                // Never pinned here: see Viewport.script.
+                applyViewport(pin = false)
                 if (clearHistoryWhenLoaded) {
                     clearHistoryWhenLoaded = false
                     view.clearHistory()
@@ -133,10 +173,23 @@ class WebActivity : ComponentActivity() {
 
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                 if (!request.isForMainFrame) return
-                refresher.isRefreshing = false
                 viewModel.onMainFrameError(error.description.toString())
             }
         }
+    }
+
+    /**
+     * Lays the page out at the header's width and zoom. The width is measured off
+     * the view rather than asked of `window.screen`, which answers for the whole
+     * display; before the first layout there is nothing to measure, so the screen
+     * stands in.
+     */
+    private fun applyViewport(pin: Boolean) {
+        val metrics = resources.displayMetrics
+        val base = (webView.width / metrics.density).roundToInt()
+            .takeIf { it > 0 }
+            ?: (metrics.widthPixels / metrics.density).roundToInt()
+        webView.evaluateJavascript(Viewport.script(base, chrome.desktop, chrome.zoom, pin), null)
     }
 
     /** Links to anything but this page's own server go to whatever the system opens them with. */
