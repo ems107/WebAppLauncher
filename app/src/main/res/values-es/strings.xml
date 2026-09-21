@@ -90,4 +90,12 @@
     <string name="retry">Reintentar</string>
     <string name="close">Cerrar</string>
     <string name="page_missing">Esta página ya no existe en el lanzador.</string>
+
+    <string name="desktop_on">Vista de escritorio, activada</string>
+    <string name="desktop_off">Vista de escritorio, desactivada</string>
+    <string name="zoom_in">Acercar</string>
+    <string name="zoom_out">Alejar</string>
+    <string name="reload">Recargar</string>
+    <string name="hide_bar">Ocultar la cabecera</string>
+    <string name="show_bar">Mostrar la cabecera</string>
 </resources>

@@ -21,9 +21,14 @@ window itself.
   what it said (no answer in time, refused, unreachable), with a retry.
 - **Full screen, with state kept.** JavaScript, DOM storage and cookies are on,
   so a site's login survives closing the app. Links to other sites open in the
-  browser; back walks the page's history and then leaves; pulling down from the
-  top reloads. A page that follows `prefers-color-scheme` goes light or dark
-  with the phone.
+  browser; back walks the page's history and then leaves. A page that follows
+  `prefers-color-scheme` goes light or dark with the phone.
+- **A header, out of the way until wanted.** A page opens with only a small tab
+  at the top; tapping it shows the header, and dragging it sideways moves it off
+  whatever is underneath. The header switches to a desktop layout, zooms the
+  layout from 30 % to 300 % (the page reflows, rather than growing sideways), and
+  reloads -- the only way to, since pulling down does nothing. Pinching zooms
+  too, separately. All of it starts over each time the page is opened.
 - **Home-screen shortcuts.** A page's menu pins it to the home screen, and the
   launcher icon's long-press menu lists the pages. Each page runs as its own
   task, with its name and icon in recents.

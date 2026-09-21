@@ -88,7 +88,13 @@ kind installs over the other, and debug builds do not look for updates.
   `apple-touch-icon` → `rel="icon"` → `/favicon.ico`, never SVG), so it is JVM
   tested; `IconFetcher` downloads. A page's icon is fetched the first time it
   opens, which is when its server is known to answer.
-- `web/WebActivity` runs each page as its own document task.
+- `web/WebActivity` runs each page as its own document task. `web/PageBar` is
+  the header above it (desktop layout, zoom, reload, hide), ported from
+  `../claude-history-android`'s `ViewerBar`; every page opens with it hidden
+  behind a tab, and nothing of it is saved. `web/Viewport` is the one rule both
+  the zoom and the desktop switch go through: they rewrite the page's viewport
+  width, and the scale is always what fits that width -- a layout zoom, not a
+  magnification. The pinch is the magnification, and stays separate.
 - `update/UpdateRepository` is **the one copy of the update state**, like the
   pages. The hourly `UpdateCheckWorker`, the list's resume check and the menu's
   forced check all go through `UpdateChecker`, which is JVM tested with
@@ -197,20 +203,23 @@ updater and stay published.
 - Cookies need `CookieManager.setAcceptCookie(true)` and a `flush()` when the
   activity pauses, or the session is gone on every exit -- which for the Jackery
   app means retyping the PIN constantly.
-- **Pull-to-refresh is decided by Chromium, and drawn by the app.** A WebView's
-  `scrollY` cannot say whether a page is at the top (ItsMyMoney scrolls an
-  element of its own and leaves it at 0), and guessing from outside what a drag
-  would do -- scrolled elements, `touch-action`, `preventDefault`, iframes --
-  needs a new rule for every page. So `PullToRefreshLayout` lets the page have
-  the drag and listens for `overScrollBy` going past the top: if it comes right
-  as the drag begins (150 ms), nothing on the page used it, and the layout takes
-  the gesture from there. Two ways that were tried and must not come back:
-  moving the spinner with the overscroll reports themselves (1.0.1: they arrive
-  late and in chunks, the spinner jumps and cannot be pushed back), and a
-  `touchstart` script guessing per case (1.0.2). The consequence, accepted
-  knowingly: a page that sets `overscroll-behavior` to `contain` or `none`
-  opts out of pull-to-refresh here exactly as it does in Chrome -- ItsMyMoney's
-  list does both.
+- **There is no pull-to-refresh, on purpose: reloading is the header's.** Three
+  versions (1.0.1 to 1.0.3) went into deciding from outside the page whether a
+  drag down was a pull -- `scrollY` lies for pages that scroll an element of
+  their own, a `touchstart` script needs a rule per page, and even Chromium's
+  own overscroll reports arrive late and in chunks. It was taken out rather than
+  tuned again. Do not bring the gesture back without being asked.
+- **Never pin the viewport while a page is loading.** `Viewport.script` pins
+  the scale (minimum = maximum) for 50 ms to pull a pinched page back to the
+  header's zoom; done in `onPageFinished` at any zoom but 100 %, Chromium keeps
+  the page's scale limits at that single value for good -- the pinch stays dead
+  until the page is closed, whatever the tag says afterwards, and not even a
+  DevTools `Input.synthesizePinchGesture` gets through. A load gets the freed
+  tag only (`pin = false`); the first layout and the starting zoom apply
+  nothing, since both land while the first load is still running.
+  With a debug build, `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>`
+  and a WebSocket to `/json`'s target (Node has `WebSocket` built in) read
+  `visualViewport.scale` directly, which a screenshot cannot.
 - **`prefers-color-scheme` comes from the app's theme**, not the system, for
   apps targeting 33+: the WebView reads `isLightTheme`. A theme that is always
   `Light` keeps every page light. Before Android 10 the platform has no such
