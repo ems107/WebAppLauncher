@@ -3,7 +3,7 @@
 ## Estado
 
 - [x] Plan escrito (este fichero).
-- [ ] `Viewport.kt` + test.
+- [x] `Viewport.kt` + test: ancho/escala en función pura, con test JVM (pasa).
 - [ ] Cabecera y pestaña; WebView sin pull-to-refresh.
 - [ ] Limpieza de dependencia y docs.
 - [ ] Verificación en el DT50.
