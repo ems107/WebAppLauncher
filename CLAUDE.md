@@ -215,7 +215,8 @@ updater and stay published.
   the page's scale limits at that single value for good -- the pinch stays dead
   until the page is closed, whatever the tag says afterwards, and not even a
   DevTools `Input.synthesizePinchGesture` gets through. A load gets the freed
-  tag only (`pin = false`), and so do the first layout and the starting value.
+  tag only (`pin = false`); the first layout and the starting zoom apply
+  nothing, since both land while the first load is still running.
   With a debug build, `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>`
   and a WebSocket to `/json`'s target (Node has `WebSocket` built in) read
   `visualViewport.scale` directly, which a screenshot cannot.
